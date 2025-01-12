@@ -1,4 +1,3 @@
-
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -7,27 +6,34 @@
     <title>Murmuration (1.0.0)</title>
     <style>
         body {
-            font-family: Arial, sans-serif;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; /* Improved font */
             line-height: 1.6;
             margin: 0;
             padding: 20px;
             background-color: #f4f4f4;
+            text-align: center; /* Centered text */
         }
         h1, h2, h3 {
             color: #333;
+            text-align: center; /* Centered headings */
         }
         h1 {
             border-bottom: 2px solid #333;
             padding-bottom: 10px;
+            margin-bottom: 20px; /* Added margin for spacing */
         }
         h2 {
             margin-top: 20px;
+            margin-bottom: 10px; /* Added margin for spacing */
         }
         pre {
             background: #eee;
             padding: 10px;
             border-radius: 5px;
             overflow-x: auto;
+            text-align: left; /* Left align code blocks */
+            margin: 0 auto; /* Centered pre blocks */
+            max-width: 80%; /* Limit width for better readability */
         }
         code {
             background: #f4f4f4;
@@ -37,6 +43,8 @@
         ul {
             list-style-type: none;
             padding: 0;
+            text-align: left; /* Left align list items */
+            display: inline-block; /* Center the list */
         }
         li {
             margin: 5px 0;
@@ -44,6 +52,7 @@
         .warning {
             color: red;
             font-weight: bold;
+            text-align: center; /* Centered warning */
         }
     </style>
 </head>
@@ -209,7 +218,7 @@ agent.registerTool(dataTool);
 );
 
 // Access chain results
-print(result.finalOutput);          // Final chain output
+print(result.finalOutput);          // Final chain output ```html
 print(result.results.length);       // Number of agent results
 print(result.progress.length);      // Number of progress records
 </code></pre>
@@ -227,7 +236,7 @@ print(result.progress.length);      // Number of progress records
 );
 </code></pre>
 
-    <h2 id=" streaming-support">Streaming Support</h2>
+    <h2 id="streaming-support">Streaming Support</h2>
     <p>Enable real-time streaming with configurable delay. The streaming implementation uses GenerativeModel's response text, splitting it into chunks with a 50ms delay:</p>
     <pre><code>final config = MurmurationConfig(
   apiKey: 'your-api-key',
