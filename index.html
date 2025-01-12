@@ -1,96 +1,172 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Murmuration (1.0.0)</title>
+    <title>Murmuration (1.0.0) 🐦✨</title>
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&display=swap" rel="stylesheet">
     <style>
         body {
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; 
-            line-height: 1.6;
             margin: 0;
+            font-family: 'Roboto', sans-serif;
+            background: linear-gradient(to bottom, #0175C2, #1E1E1E);
+            color: #ECEFF1;
+        }
+
+        header {
+            background: #02569B;
             padding: 20px;
-            background-color: #f4f4f4;
-            text-align: center; 
-        }
-        h1, h2, h3 {
-            color: #333;
             text-align: center;
+            box-shadow: 0px 4px 6px rgba(0, 0, 0, 0.2);
         }
-        h1 {
-            border-bottom: 2px solid #333;
-            padding-bottom: 10px;
-            margin-bottom: 20px; 
+
+        header h1 {
+            font-size: 2.5rem;
+            margin: 0;
+            color: #FFFFFF;
         }
-        h2 {
-            margin-top: 20px;
-            margin-bottom: 10px; 
+
+        header p {
+            margin: 5px 0 0;
+            font-size: 1.1rem;
+            color: #B3E5FC;
         }
-        pre {
-            background: #eee;
-            padding: 10px;
+
+        header .buttons {
+            margin-top: 10px;
+        }
+
+        header .buttons a {
+            text-decoration: none;
+            background: #1E88E5;
+            color: #FFFFFF;
+            padding: 10px 15px;
             border-radius: 5px;
-            overflow-x: auto;
-            text-align: left;
-            margin: 0 auto; 
-            max-width: 80%; 
+            margin: 5px;
+            font-weight: 500;
+            transition: background 0.3s;
         }
-        code {
-            background: #f4f4f4;
+
+        header .buttons a:hover {
+            background: #1565C0;
+        }
+
+        .content {
+            max-width: 800px; /* Adjusted for better centering */
+            margin: 20px auto;
+            padding: 20px;
+            background: #263238;
+            border-radius: 10px;
+            box-shadow: 0px 6px 10px rgba(0, 0, 0, 0.3);
+            text-align: left; /* Align text to the left for better readability */
+        }
+
+        .content h2 {
+            color: #0288D1;
+            border-bottom: 2px solid #0288D1;
+            padding-bottom: 5px;
+        }
+
+        .content code {
+            background: #37474F;
+            color: #81D4FA;
             padding: 2px 4px;
             border-radius: 3px;
+            font-family: 'Courier New', monospace;
         }
-        ul {
-            list-style-type: none;
+
+        .code-block {
+            background: #37474F;
+            padding: 15px;
+            border-radius: 5px;
+            overflow-x: auto;
+        }
+
+        .code-block pre {
+            margin: 0;
+            color: #ECEFF1;
+        }
+
+        .table-of-contents ul {
+            list-style: none;
             padding: 0;
-            text-align: left; 
-            display: inline-block; 
         }
-        li {
+
+        .table-of-contents ul li {
             margin: 5px 0;
         }
-        .warning {
-            color: red;
-            font-weight: bold;
-            text-align: center; 
+
+        .table-of-contents a {
+            text-decoration: none;
+            color: #03A9F4;
+        }
+
+        footer {
+            text-align: center;
+            padding: 10px;
+            background: #02569B;
+            margin-top: 20px;
+            color: #B3E5FC;
+        }
+
+        footer a {
+            color: #81D4FA;
+            text-decoration: none;
         }
     </style>
 </head>
+
 <body>
+    <header>
+        <h1>Murmuration (1.0.0) 🐦✨</h1>
+        <p>A Dart framework for orchestrating multi-agent interactions with Google's Generative AI models.</p>
+        <div class="buttons">
+            <a href="https://github.com/AgnivaMaiti/murmuration" target="_blank">GitHub Repository</a>
+        </div>
+    </header>
 
-    <h1>Murmuration (1.0.0)</h1>
+    <div class="content">
+        <h2>⚠️ WARNING</h2>
+        <p>If you plan to use this in production, ensure you have proper error handling and testing in place as interaction with AI models can be unpredictable.</p>
 
-    <p>Murmuration is a Dart framework designed for orchestrating multi-agent interactions using Google's Generative AI models. It aims to facilitate seamless agent coordination and function execution, providing an ergonomic interface for constructing complex AI workflows.</p>
+        <h2>About Murmuration</h2>
+        <p>The name "Murmuration" is inspired by the mesmerizing flocking behavior of birds, symbolizing the framework's focus on coordinated agent interactions and dynamic workflows. 🐦💫</p>
 
-    <p class="warning">WARNING: If you plan to use this in production, ensure you have proper error handling and testing in place as interaction with AI models can be unpredictable.</p>
+        <h2>Table of Contents 📚</h2>
+        <div class="table-of-contents">
+ <ul>
+                <li><a href="#installation">Installation</a></li>
+                <li><a href="#quick-start">Quick Start</a></li>
+                <li><a href="#key-features">Key Features</a></li>
+                <li><a href="#core-concepts">Core Concepts</a></li>
+                <li><a href="#progress-tracking">Progress Tracking</a></li>
+                <li><a href="#streaming-support">Streaming Support</a></li>
+                <li><a href="#debugging">Debugging</a></li>
+                <li><a href="#error-handling">Error Handling</a></li>
+                <li><a href="#api-reference">API Reference</a></li>
+                <li><a href="#best-practices">Best Practices</a></li>
+                <li><a href="#examples">Examples</a></li>
+                <li><a href="#contributing">Contributing</a></li>
+                <li><a href="#license">License</a></li>
+            </ul>
+        </div>
 
-    <h2>Table of Contents</h2>
-    <ul>
-        <li><a href="#installation">Installation</a></li>
-        <li><a href="#quick-start">Quick Start</a></li>
-        <li><a href="#key-features">Key Features</a></li>
-        <li><a href="#core-concepts">Core Concepts</a></li>
-        <li><a href="#progress-tracking">Progress Tracking</a></li>
-        <li><a href="#streaming-support">Streaming Support</a></li>
-        <li><a href="#debugging">Debugging</a></li>
-        <li><a href="#error-handling">Error Handling</a></li>
-        <li><a href="#api-reference">API Reference</a></li>
-        <li><a href="#best-practices">Best Practices</a></li>
-        <li><a href="#contributing">Contributing</a></li>
-        <li><a href="#license">License</a></li>
-    </ul>
-
-    <h2 id="installation">Installation</h2>
-    <p>Add to your <code>pubspec.yaml</code>:</p>
-    <pre><code>dependencies:
+        <h2 id="installation">Installation ⚙️</h2>
+        <p>Add to your <code>pubspec.yaml</code>:</p>
+        <div class="code-block">
+            <pre>dependencies:
   murmuration: ^latest_version
-  google_generative_ai: ^latest_version
-</code></pre>
-    <p>Then run:</p>
-    <pre><code>dart pub get</code></pre>
+  google_generative_ai: ^latest_version</pre>
+        </div>
+        <p>Then run:</p>
+        <div class="code-block">
+            <pre>dart pub get</pre>
+        </div>
 
-    <h2 id="quick-start">Quick Start</h2>
-    <pre><code>import 'package:murmuration/murmuration.dart';
+        <h2 id="quick-start">Quick Start 🚀</h2>
+        <div class="code-block">
+            <pre>import 'package:murmuration/murmuration.dart';
 import 'package:google_generative_ai/google_generative_ai.dart';
 
 void main() async {
@@ -116,31 +192,34 @@ void main() async {
   );
 
   print(result.output);
-}
-</code></pre>
+}</pre>
+        </div>
 
-    <h2 id="key-features">Key Features</h2>
-    <ul>
-        <li><strong>Streamlined Agent Management</strong>: Create and coordinate multiple agents with distinct roles and capabilities.</li>
-        <li><strong>Function Registration</strong>: Register custom functions with specific parameter types that agents can invoke.</li>
-        <li><strong>Tool Integration</strong>: Add specialized tools with defined schemas for agent use.</li>
-        <li><strong>State Management</strong>: Built-in state handling for maintaining context across agent interactions.</li>
-        <li><strong>Progress Tracking</strong>: Detailed progress monitoring with timestamps and status updates.</li>
-        <li><strong>Streaming Support</strong>: Real-time streaming of agent responses with configurable delays.</li>
-        <li><strong>Agent Chains</strong>: Sequential execution of multiple agents with automatic state handoff.</li>
-    </ul>
+        <h2 id="key-features">Why Murmuration? 🤔</h2>
+        <p>Murmuration is designed for situations where you need:</p>
+        <ul>
+            <li>Multiple specialized agents working together 🤝</li>
+            <li>Complex function calling and tool usage with specific response formats 🔧</li>
+            <li>State management and context preservation across agent interactions 📊</li>
+            <li>Detailed progress tracking and logging 📈</li>
+            <li>Real-time streaming of responses with configurable delay ⏳</li>
+            <li>Integration with Google's Generative AI models 🌐</li>
+        </ul>
 
-    <h2 id="core-concepts">Core Concepts</h2>
+        <h2 id="examples">Examples</h2>
+        <p>Explore practical implementations and detailed examples in the documentation.</p>
 
-    <h3>Agents</h3>
-    <p>Agents are the fundamental building blocks in Murmuration. Each agent is powered by Google's GenerativeModel and encapsulates:</p>
-    <ul>
-        <li>Instructions defining its behavior</li>
-        <li>Available tools and functions</li>
-        <li>State management capabilities</li>
-        <li>Progress reporting mechanisms</li>
-    </ul>
-    <pre><code>final agent = murmur.createAgent(
+        <h2 id="core-concepts">Core Concepts 🧠</h2>
+        <h3>Agents</h3>
+        <p>Agents are the fundamental building blocks in Murmuration. Each agent is powered by Google's GenerativeModel and encapsulates:</p>
+        <ul>
+            <li>Instructions defining its behavior</li>
+            <li>Available tools and functions</li>
+            <li>State management capabilities</li>
+            <li>Progress reporting mechanisms</li>
+        </ul>
+        <div class="code-block">
+            <pre>final agent = murmur.createAgent(
   {'role': 'You analyze data and provide insights.'},
   currentAgentIndex: 1,      // Optional: for chain positioning
   totalAgents: 1,            // Optional: total agents in chain
@@ -156,12 +235,13 @@ agent.registerFunction(
     // Analyze data logic here
     return 'Analysis complete';
   }
-);
-</code></pre>
+);</pre>
+        </div>
 
-    <h3>Function Handlers and Response Format</h3>
-    <p>Functions must follow a specific format for registration and invocation. The Agent class detects function calls by searching for the text "function:" in the model's response:</p>
-    <pre><code>typedef FunctionHandler = dynamic Function(Map<String, dynamic>);
+        <h3>Function Handlers and Response Format</h3>
+        <p>Functions must follow a specific format for registration and invocation. The Agent class detects function calls by searching for the text "function:" in the model's response:</p>
+        <div class="code-block">
+            <pre>typedef FunctionHandler = dynamic Function(Map<String, dynamic>);
 
 // Registering a function
 void registerDataFunction(Agent agent) {
@@ -176,12 +256,13 @@ void registerDataFunction(Agent agent) {
 // Function call format in agent responses
 // The agent must return text in this EXACT format:
 // function: functionName(param1: value1, param2: value2)
-// Note: The format must match exactly, including spaces after colons
-</code></pre>
+// Note: The format must match exactly, including spaces after colons</pre>
+        </div>
 
-    <h3>Tools</h3>
-    <p>Tools must be defined with complete schemas and type-safe execution functions:</p>
-    <pre><code>final dataTool = Tool(
+        <h3>Tools 🛠️</h3>
+        <p>Tools must be defined with complete schemas and type-safe execution functions:</p>
+        <div class="code-block">
+            <pre>final dataTool = Tool(
   name: 'data_processor',
   description: 'Processes raw data into structured format',
   schema: {
@@ -197,12 +278,13 @@ void registerDataFunction(Agent agent) {
   }
 );
 
-agent.registerTool(dataTool);
-</code></pre>
+agent.registerTool(dataTool);</pre>
+        </div>
 
-    <h3>Agent Chains and State Management</h3>
-    <p>Create sequences of agents with state handoff. Note that the handoff method only copies state variables and doesn't transfer other agent properties:</p>
-    <pre><code>final result = await murmur.runAgentChain(
+        <h3>Agent Chains and State Management 🔗</h3>
+        <p>Create sequences of agents with state handoff. Note that the handoff method only copies state variables and doesn't transfer other agent properties:</p>
+        <div class="code-block">
+            <pre>final result = await murmur.runAgentChain(
   input: "Analyze this data",
   agentInstructions: [
     {'role': 'You clean and prepare data'},
@@ -218,14 +300,15 @@ agent.registerTool(dataTool);
 );
 
 // Access chain results
-print(result.finalOutput);          // Final chain output ```html
+print(result.finalOutput);          // Final chain output
 print(result.results.length);       // Number of agent results
-print(result.progress.length);      // Number of progress records
-</code></pre>
+print(result.progress.length);      // Number of progress records</pre>
+        </div>
 
-    <h2 id="progress-tracking">Progress Tracking</h2>
-    <p>Progress tracking includes timestamps and detailed status information:</p>
-    <pre><code>final result = await murmur.run(
+        <h2 id="progress-tracking">Progress Tracking 📊</h2>
+        <p>Progress tracking includes timestamps and detailed status information:</p>
+        <div class="code-block">
+            <pre>final result = await murmur.run(
   input: "Process this task",
   onProgress: (progress) {
     print('Agent ${progress.currentAgent}/${progress.totalAgents}');
@@ -233,12 +316,13 @@ print(result.progress.length);      // Number of progress records
     print('Output: ${progress.output}');
     print('Time: ${progress.timestamp}');
   }
-);
-</code></pre>
+);</pre>
+        </div>
 
-    <h2 id="streaming-support">Streaming Support</h2>
-    <p>Enable real-time streaming with configurable delay. The streaming implementation uses GenerativeModel's response text, splitting it into chunks with a 50ms delay:</p>
-    <pre><code>final config = MurmurationConfig(
+        <h2 id="streaming-support">Streaming Support 🌊</h2>
+        <p>Enable real-time streaming with configurable delay. The streaming implementation uses GenerativeModel's response text, splitting it into chunks with a 50ms delay:</p>
+        <div class="code-block">
+            <pre>final config = MurmurationConfig(
   apiKey: 'your-api-key',
   stream: true,  // Enable streaming
   debug: true    // Optional: enable debug logging
@@ -256,12 +340,13 @@ final result = await murmur.run(
 // Chunks are created by splitting the response text on spaces
 await for (final chunk in result.stream!) {
   print(chunk);
-}
-</code></pre>
+}</pre>
+        </div>
 
-    <h2 id="debugging">Debugging</h2>
-    <p>Enable comprehensive debug logging:</p>
-    <pre><code>final config = MurmurationConfig(
+        <h2 id="debugging">Debugging 🐞</h2>
+        <p>Enable comprehensive debug logging:</p>
+        <div class="code-block">
+            <pre>final config = MurmurationConfig(
   apiKey: 'your-api-key',
   debug: true,
   logger: MurmurationLogger(
@@ -273,12 +358,13 @@ await for (final chunk in result.stream!) {
       print('ERROR: $message');
     }
   )
-);
-</code></pre>
+);</pre>
+        </div>
 
-    <h2 id="error-handling">Error Handling</h2>
-    <p>Comprehensive error handling with original error preservation:</p>
-    <pre><code>try {
+        <h2 id="error-handling">Error Handling ⚠️</h2>
+        <p>Comprehensive error handling with original error preservation:</p>
+        <div class="code-block">
+            <pre>try {
   final result = await murmur.run(
     input: "Process this",
     agentInstructions: {'role': 'Assistant'}
@@ -299,15 +385,14 @@ await for (final chunk in result.stream!) {
     print('Original Error: ${e.originalError}');
   }
 } catch (e) {
-  print('Unexpected Error: $e');
-}
-</code></pre>
+  print('Unexpected Error: $e');</pre>
+        </div>
 
-    <h2 id="api-reference">API Reference</h2>
-
-    <h3>MurmurationConfig</h3>
-    <p>Configuration options for the Murmuration instance:</p>
-    <pre><code>final config = MurmurationConfig(
+        <h2 id="api-reference">API Reference 📖</h2>
+        <h3>MurmurationConfig</h3>
+        <p>Configuration options for the Murmuration instance:</p>
+        <div class="code-block">
+            <pre>final config = MurmurationConfig(
   apiKey: 'required-api-key',
   model: 'gemini-1.5-flash-latest',  // Default model
   debug: false,                      // Default debug mode
@@ -317,21 +402,22 @@ await for (final chunk in result.stream!) {
     onLog: null,
     onError: null
   )
-);
-</code></pre>
+);</pre>
+        </div>
 
-    <h3>Agent Functions</h3>
-    <p>Core agent manipulation methods:</p>
-    <ul>
-        <li><code>registerFunction(String name, FunctionHandler handler)</code>: Add custom function handlers.</li>
-        <li><code>registerTool(Tool tool)</code>: Add specialized tools.</li>
-        <li><code>updateState(Map<String, dynamic> newState)</code>: Modify agent state.</li>
-        <li><code>handoff(Agent nextAgent)</code>: Transfer state variables to another agent.</li>
-        <li><code>execute(String input)</code>: Run the agent with input.</li>
-    </ul>
+        <h3>Agent Functions</h3>
+        <p>Core agent manipulation methods:</p>
+        <ul>
+            <li><code>registerFunction(String name, FunctionHandler handler)</code>: Add custom function handlers</li>
+            <li><code>registerTool(Tool tool)</code>: Add specialized tools</li>
+            <li><code>updateState(Map<String, dynamic> newState)</code>: Modify agent state</li>
+            <li><code>handoff(Agent nextAgent)</code>: Transfer state variables to another agent</li>
+            <li><code>execute(String input)</code>: Run the agent with input</li>
+        </ul>
 
-    <h3>Result Types</h3>
-    <pre><code>// Agent execution result
+        <h3>Result Types</h3>
+        <div class="code-block">
+            <pre>// Agent execution result
 class AgentResult {
   final String output;
   final Map<String, dynamic> stateVariables;
@@ -354,81 +440,86 @@ class AgentProgress {
   final String status;
   final String? output;
   final DateTime timestamp;
-}
-</code></pre>
+}</pre>
+        </div>
 
-    <h2 id="best-practices">Best Practices</h2>
-    <ol>
-        <li><strong>State Management</strong>
-            <ul>
-                <li>Use immutable state operations with <code>updateState()</code>.</li>
-                <li>Clear state between chain executions.</li>
-                <li>Preserve context variables in state.</li>
-                <li>Remember that handoff only copies state variables.</li>
-            </ul>
-        </li>
-        <li><strong>Function Design</strong>
-            <ul>
-                <li>Always use <code>Map<String, dynamic></code> for parameters.</li>
-                <li>Follow the exact function call format in responses.</li>
-                <li>Handle missing or invalid parameters.</li>
-                <li>Test function call string parsing extensively.</li>
-            </ul>
-        </li>
-        <li><strong>Error Handling</strong>
-            <ul>
-                <li>Catch <code>MurmurationError</code> separately.</li>
-                <li>Preserve original errors.</li>
-                <li>Log errors through <code>MurmurationLogger</code>.</li>
-                <li>Handle <code>GenerativeModel</code> errors properly.</li>
-            </ul>
-        </li>
-        <li><strong>Progress Monitoring</strong>
-            <ul>
-                <li>Implement <code>onProgress</code> callbacks.</li>
-                <li>Track timing with timestamps.</li>
-                <li>Log state transitions.</li>
-                <li>Monitor streaming progress.</li>
-            </ul>
-        </li>
-        <li><strong>Tool Integration</strong>
-            <ul>
-                <li>Define complete schemas.</li>
-                <li>Include parameter validation.</li>
-                <li>Document expected inputs/outputs.</li>
-                <li>Test tool execution thoroughly.</li>
-            </ul>
-        </li>
-        <li><strong>Streaming</strong>
-            <ul>
-                <li>Account for 50ms chunk delay.</li>
-                <li>Handle stream availability.</li>
-                <li>Implement proper stream cleanup.</li>
-                <li>Consider chunk size implications.</li>
-            </ul>
-        </li>
-    </ol>
+        <h2 id="best-practices">Best Practices 🏆</h2>
+        <ol>
+            <li><strong>State Management</strong>
+                <ul>
+                    <li>Use immutable state operations with <code>updateState()</code></li>
+                    <li>Clear state between chain executions</li>
+                    <li>Preserve context variables in state</li>
+                    <li>Remember that handoff only copies state variables</li>
+                </ul>
+            </li>
+            <li><strong>Function Design</strong>
+                <ul>
+                    <li>Always use <code>Map<String, dynamic></code> for parameters</li>
+                    <li>Follow the exact function call format in responses</li>
+                    <li>Handle missing or invalid parameters</li>
+                    <li>Test function call string parsing extensively</li>
+                </ul>
+            </li>
+            <li><strong>Error Handling</strong>
+                <ul>
+                    <li>Catch <code>MurmurationError</code> separately</li>
+                    <li>Preserve original errors</li>
+                    <li>Log errors through <code>MurmurationLogger</code></li>
+                    <li>Handle <code>GenerativeModel</code> errors properly</li>
+                </ul>
+            </li>
+            <li><strong>Progress Monitoring</strong>
+                <ul>
+                    <li>Implement <code>onProgress</code> callbacks</li>
+                    <li>Track timing with timestamps</li>
+                    <li>Log state transitions</li>
+                    <li>Monitor streaming progress</li>
+                </ul>
+            </li>
+            <li><strong>Tool Integration</strong>
+                <ul>
+                    <li>Define complete schemas</li>
+                    <li>Include parameter validation</li>
+                    <li>Document expected inputs/outputs</li>
+                    <li>Test tool execution thoroughly</li>
+                </ul>
+            </li>
+            <li><strong>Streaming</strong>
+                <ul>
+                    <li>Account for 50ms chunk delay</li>
+                    <li>Handle stream availability</li>
+                    <li>Implement proper stream cleanup</li>
+                    <li>Consider chunk size implications</li>
+                </ul>
+            </li>
+        </ol>
 
-    <h2 id="contributing">Contributing</h2>
-    <p>Guidelines for contributing to Murmuration:</p>
-    <ol>
-        <li>Fork the repository.</li>
-        <li>Create a feature branch.</li>
-        <li>Submit a pull request.</li>
-    </ol>
-    <p>Please ensure your code:</p>
-    <ul>
-        <li>Follows Dart conventions.</li>
-        <li>Is properly documented.</li>
-        <li>Handles errors appropriately.</li>
-        <li>Includes type annotations.</li>
-    </ul>
+        <h2 id="contributing">Contributing 🤝</h2>
+        <p>Guidelines for contributing to Murmuration:</p>
+        <ol>
+            <li>Fork the repository</li>
+            <li>Create a feature branch</li>
+            <li>Submit a pull request</li>
+        </ol>
+        <p>Please ensure your code:</p>
+        <ul>
+            <li>Follows Dart conventions</li>
+            <li>Is properly documented</li>
+            <li>Handles errors appropriately</li>
+            <li>Includes type annotations</li>
+        </ul>
 
-    <h2 id="license">License</h2>
-    <p>This project is licensed under the MIT License - see the <a href="LICENSE">LICENSE</a> file for details.</p>
+        <h2 id="license">License 📜</h2>
+        <p>This project is licensed under the MIT License - see the <a href="#">LICENSE</a> file for details.</p>
 
-    <h2>Author</h2>
-    <p>This project is authored by <a href="https://github.com/AgnivaMaiti">Agniva Maiti</a>.</p>
+        <h2 id="author">Author ✍️</h2>
+        <p>This project is authored by <a href="https://github.com/AgnivaMaiti">Agniva Maiti</a>.</p>
+    </div>
 
+    <footer>
+        <p>Created by <strong>Agniva Maiti</strong>. Licensed under the <a href="#">MIT License</a>.</p>
+    </footer>
 </body>
+
 </html>
