@@ -1,174 +1,427 @@
+Here is a professional version of the README converted into a single `index.html` file. The emojis have been removed, and the content is structured for a clean presentation.
+
+```html
 <!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Murmuration Framework</title>
+    <title>Murmuration (1.0.0)</title>
     <style>
         body {
             font-family: Arial, sans-serif;
+            line-height: 1.6;
             margin: 0;
-            padding: 0;
-            background-color: #f4f4f9;
+            padding: 20px;
+            background-color: #f4f4f4;
+        }
+        h1, h2, h3 {
             color: #333;
         }
-        header {
-            background-color: #6200ea;
-            color: white;
-            padding: 20px 0;
-            text-align: center;
-        }
-        header h1 {
-            margin: 0;
-            font-size: 2.5rem;
-        }
-        header p {
-            margin: 10px 0;
-            font-size: 1.2rem;
-        }
-        nav {
-            display: flex;
-            justify-content: center;
-            background-color: #3700b3;
-            padding: 10px 0;
-        }
-        nav a {
-            color: white;
-            text-decoration: none;
-            margin: 0 15px;
-            font-weight: bold;
-        }
-        nav a:hover {
-            text-decoration: underline;
-        }
-        main {
-            padding: 20px;
-            max-width: 1200px;
-            margin: 0 auto;
-        }
-        section {
-            margin-bottom: 40px;
+        h1 {
+            border-bottom: 2px solid #333;
+            padding-bottom: 10px;
         }
         h2 {
-            border-bottom: 2px solid #6200ea;
-            padding-bottom: 5px;
-            margin-bottom: 20px;
-            font-size: 1.8rem;
+            margin-top: 20px;
         }
         pre {
-            background-color: #f0f0f0;
-            padding: 15px;
-            border-left: 4px solid #6200ea;
+            background: #eee;
+            padding: 10px;
+            border-radius: 5px;
             overflow-x: auto;
         }
-        .code {
-            font-family: "Courier New", Courier, monospace;
-            color: #d32f2f;
+        code {
+            background: #f4f4f4;
+            padding: 2px 4px;
+            border-radius: 3px;
         }
         ul {
-            list-style-type: disc;
-            margin: 10px 0 10px 20px;
+            list-style-type: none;
+            padding: 0;
         }
-        footer {
-            background-color: #6200ea;
-            color: white;
-            text-align: center;
-            padding: 15px 0;
-        }
-        footer p {
+        li {
             margin: 5px 0;
+        }
+        .warning {
+            color: red;
+            font-weight: bold;
         }
     </style>
 </head>
 <body>
-    <header>
-        <h1>Murmuration (1.0.0) 🐦✨</h1>
-        <p>A Dart framework for orchestrating multi-agent interactions with Google's Generative AI models.</p>
-    </header>
-    <nav>
-        <a href="#installation">Installation</a>
-        <a href="#quick-start">Quick Start</a>
-        <a href="#features">Key Features</a>
-        <a href="#core-concepts">Core Concepts</a>
-        <a href="#best-practices">Best Practices</a>
-        <a href="#license">License</a>
-    </nav>
-    <main>
-        <section id="installation">
-            <h2>Installation ⚙️</h2>
-            <p>Add the following to your <code>pubspec.yaml</code>:</p>
-            <pre><code class="code">dependencies:
+
+    <h1>Murmuration (1.0.0)</h1>
+
+    <p>Murmuration is a Dart framework designed for orchestrating multi-agent interactions using Google's Generative AI models. It aims to facilitate seamless agent coordination and function execution, providing an ergonomic interface for constructing complex AI workflows.</p>
+
+    <p class="warning">WARNING: If you plan to use this in production, ensure you have proper error handling and testing in place as interaction with AI models can be unpredictable.</p>
+
+    <h2>Table of Contents</h2>
+    <ul>
+        <li><a href="#installation">Installation</a></li>
+        <li><a href="#quick-start">Quick Start</a></li>
+        <li><a href="#key-features">Key Features</a></li>
+        <li><a href="#core-concepts">Core Concepts</a></li>
+        <li><a href="#progress-tracking">Progress Tracking</a></li>
+        <li><a href="#streaming-support">Streaming Support</a></li>
+        <li><a href="#debugging">Debugging</a></li>
+        <li><a href="#error-handling">Error Handling</a></li>
+        <li><a href="#api-reference">API Reference</a></li>
+        <li><a href="#best-practices">Best Practices</a></li>
+        <li><a href="#contributing">Contributing</a></li>
+        <li><a href="#license">License</a></li>
+    </ul>
+
+    <h2 id="installation">Installation</h2>
+    <p>Add to your <code>pubspec.yaml</code>:</p>
+    <pre><code>dependencies:
   murmuration: ^latest_version
   google_generative_ai: ^latest_version
 </code></pre>
-            <p>Then run:</p>
-            <pre><code class="code">dart pub get</code></pre>
-        </section>
-        <section id="quick-start">
-            <h2>Quick Start 🚀</h2>
-            <pre><code class="code">import 'package:murmuration/murmuration.dart';
+    <p>Then run:</p>
+    <pre><code>dart pub get</code></pre>
+
+    <h2 id="quick-start">Quick Start</h2>
+    <pre><code>import 'package:murmuration/murmuration.dart';
 import 'package:google_generative_ai/google_generative_ai.dart';
 
 void main() async {
-    final config = MurmurationConfig(
-        apiKey: 'your-api-key',
-        model: 'gemini-1.5-flash-latest',
-        debug: false,
-        stream: false,
-        logger: MurmurationLogger()
-    );
+  final config = MurmurationConfig(
+    apiKey: 'your-api-key',
+    model: 'gemini-1.5-flash-latest',
+    debug: false,
+    stream: false,
+    logger: MurmurationLogger()
+  );
 
-    final murmur = Murmuration(config);
+  final murmur = Murmuration(config);
 
-    final result = await murmur.run(
-        input: "Hello!",
-        agentInstructions: {
-            'role': 'You are a helpful assistant.'
-        }
-    );
+  final result = await murmur.run(
+    input: "Hello!",
+    agentInstructions: {
+      'role': 'You are a helpful assistant.'
+    },
+    stateVariables: {},  // Optional initial state
+    tools: [],           // Optional tools
+    functions: {},       // Optional function handlers
+    onProgress: null     // Optional progress callback
+  );
 
+  print(result.output);
+}
+</code></pre>
+
+    <h2 id="key-features">Key Features</h2>
+    <ul>
+        <li><strong>Streamlined Agent Management</strong>: Create and coordinate multiple agents with distinct roles and capabilities.</li>
+        <li><strong>Function Registration</strong>: Register custom functions with specific parameter types that agents can invoke.</li>
+        <li><strong>Tool Integration</strong>: Add specialized tools with defined schemas for agent use.</li>
+        <li><strong>State Management</strong>: Built-in state handling for maintaining context across agent interactions.</li>
+        <li><strong>Progress Tracking</strong>: Detailed progress monitoring with timestamps and status updates.</li>
+        <li><strong>Streaming Support</strong>: Real-time streaming of agent responses with configurable delays.</li>
+        <li><strong>Agent Chains</strong>: Sequential execution of multiple agents with automatic state handoff.</li>
+    </ul>
+
+    <h2 id="core-concepts">Core Concepts</h2>
+
+    <h3>Agents</h3>
+    <p>Agents are the fundamental building blocks in Murmuration. Each agent is powered by Google's GenerativeModel and encapsulates:</p>
+    <ul>
+        <li>Instructions defining its behavior</li>
+        <li>Available tools and functions</li>
+        <li>State management capabilities</li>
+        <li>Progress reporting mechanisms</li>
+    </ul>
+    <pre><code>final agent = murmur.createAgent(
+  {'role': 'You analyze data and provide insights.'},
+  currentAgentIndex: 1,      // Optional: for chain positioning
+  totalAgents: 1,            // Optional: total agents in chain
+  onProgress: (progress) {   // Optional: progress tracking
+    print(progress.toString());
+  }
+);
+
+// Registering a function with proper type annotation
+agent.registerFunction(
+  'analyzeData',
+  (Map<String, dynamic> params) {
+    // Analyze data logic here
+    return 'Analysis complete';
+  }
+);
+</code></pre>
+
+    <h3>Function Handlers and Response Format</h3>
+    <p>Functions must follow a specific format for registration and invocation. The Agent class detects function calls by searching for the text "function:" in the model's response:</p>
+    <pre><code>typedef FunctionHandler = dynamic Function(Map<String, dynamic>);
+
+// Registering a function
+void registerDataFunction(Agent agent) {
+  agent.registerFunction('processData', (Map<String, dynamic> params) {
+    // Access context variables if available
+    final contextVars = params['context_variables'];
+    // Process data
+    return {'result': 'Processed data'};
+  });
+}
+
+// Function call format in agent responses
+// The agent must return text in this EXACT format:
+// function: functionName(param1: value1, param2: value2)
+// Note: The format must match exactly, including spaces after colons
+</code></pre>
+
+    <h3>Tools</h3>
+    <p>Tools must be defined with complete schemas and type-safe execution functions:</p>
+    <pre><code>final dataTool = Tool(
+  name: 'data_processor',
+  description: 'Processes raw data into structured format',
+  schema: {
+    'type': 'object',
+    'properties': {
+      'data': {'type': 'string'},
+      'format': {'type': 'string'}
+    }
+  },
+  execute: (Map<String, dynamic> params) {
+    // Tool execution logic
+    return 'Processed result';
+  }
+);
+
+agent.registerTool(dataTool);
+</code></pre>
+
+    <h3>Agent Chains and State Management</h3>
+    <p>Create sequences of agents with state handoff. Note that the handoff method only copies state variables and doesn't transfer other agent properties:</p>
+    <pre><code>final result = await murmur.runAgentChain(
+  input: "Analyze this data",
+  agentInstructions: [
+    {'role': 'You clean and prepare data'},
+    {'role': 'You analyze prepared data'},
+    {'role': 'You create summaries of analysis'}
+  ],
+  tools: [],                    // Optional tools shared across chain
+  functions: {},                // Optional functions shared across chain
+  logProgress: true,            // Enable progress logging
+  onProgress: (progress) {      // Optional progress callback
+    print(progress.toString());
+  }
+);
+
+// Access chain results
+print(result.finalOutput);          // Final chain output
+print(result.results.length);       // Number of agent results
+print(result.progress.length);      // Number of progress records
+</code></pre>
+
+    <h2 id="progress-tracking">Progress Tracking</h2>
+    <p>Progress tracking includes timestamps and detailed status information:</p>
+    <pre><code>final result = await murmur.run(
+  input: "Process this task",
+  onProgress: (progress) {
+    print('Agent ${progress.currentAgent}/${progress.totalAgents}');
+    print('Status: ${progress.status}');
+    print('Output: ${progress.output}');
+    print('Time: ${progress.timestamp}');
+  }
+);
+</code></pre>
+
+    <h2 id=" streaming-support">Streaming Support</h2>
+    <p>Enable real-time streaming with configurable delay. The streaming implementation uses GenerativeModel's response text, splitting it into chunks with a 50ms delay:</p>
+    <pre><code>final config = MurmurationConfig(
+  apiKey: 'your-api-key',
+  stream: true,  // Enable streaming
+  debug: true    // Optional: enable debug logging
+);
+
+final murmur = Murmuration(config);
+final result = await murmur.run(
+  input: "Stream this response",
+  onProgress: (progress) {
+    print('Streaming: ${progress.status}');
+  }
+);
+
+// Stream includes 50ms delay between chunks
+// Chunks are created by splitting the response text on spaces
+await for (final chunk in result.stream!) {
+  print(chunk);
+}
+</code></pre>
+
+    <h2 id="debugging">Debugging</h2>
+    <p>Enable comprehensive debug logging:</p>
+    <pre><code>final config = MurmurationConfig(
+  apiKey: 'your-api-key',
+  debug: true,
+  logger: MurmurationLogger(
+    enabled: true,
+    onLog: (message) {
+      print('LOG: $message');
+    },
+    onError: (message) {
+      print('ERROR: $message');
+    }
+  )
+);
+</code></pre>
+
+    <h2 id="error-handling">Error Handling</h2>
+    <p>Comprehensive error handling with original error preservation:</p>
+    <pre><code>try {
+  final result = await murmur.run(
+    input: "Process this",
+    agentInstructions: {'role': 'Assistant'}
+  );
+
+  // Check for stream availability
+  if (result.stream != null) {
+    await for (final chunk in result.stream!) {
+      // Handle streaming response
+    }
+  } else {
+    // Handle regular response
     print(result.output);
-}</code></pre>
-        </section>
-        <section id="features">
-            <h2>Key Features 🌟</h2>
+  }
+} on MurmurationError catch (e) {
+  print('Murmuration Error: ${e.message}');
+  if (e.originalError != null) {
+    print('Original Error: ${e.originalError}');
+  }
+} catch (e) {
+  print('Unexpected Error: $e');
+}
+</code></pre>
+
+    <h2 id="api-reference">API Reference</h2>
+
+    <h3>MurmurationConfig</h3>
+    <p>Configuration options for the Murmuration instance:</p>
+    <pre><code>final config = MurmurationConfig(
+  apiKey: 'required-api-key',
+  model: 'gemini-1.5-flash-latest',  // Default model
+  debug: false,                      // Default debug mode
+  stream: false,                     // Default streaming mode
+  logger: MurmurationLogger(         // Optional logger
+    enabled: false,
+    onLog: null,
+    onError: null
+  )
+);
+</code></pre>
+
+    <h3>Agent Functions</h3>
+    <p>Core agent manipulation methods:</p>
+    <ul>
+        <li><code>registerFunction(String name, FunctionHandler handler)</code>: Add custom function handlers.</li>
+        <li><code>registerTool(Tool tool)</code>: Add specialized tools.</li>
+        <li><code>updateState(Map<String, dynamic> newState)</code>: Modify agent state.</li>
+        <li><code>handoff(Agent nextAgent)</code>: Transfer state variables to another agent.</li>
+        <li><code>execute(String input)</code>: Run the agent with input.</li>
+    </ul>
+
+    <h3>Result Types</h3>
+    <pre><code>// Agent execution result
+class AgentResult {
+  final String output;
+  final Map<String, dynamic> stateVariables;
+  final List<String> toolCalls;
+  final Stream<String>? stream;
+  final List<AgentProgress>? progress;
+}
+
+// Chain execution result
+class ChainResult {
+  final List<AgentResult> results;
+  final String finalOutput;
+  final List<AgentProgress> progress;
+}
+
+// Progress tracking information
+class AgentProgress {
+  final int currentAgent;
+  final int totalAgents;
+  final String status;
+  final String? output;
+  final DateTime timestamp;
+}
+</code></pre>
+
+    <h2 id="best-practices">Best Practices</h2>
+    <ol>
+        <li><strong>State Management</strong>
             <ul>
-                <li>Streamlined Agent Management</li>
-                <li>Function Registration</li>
-                <li>Tool Integration</li>
-                <li>State Management</li>
-                <li>Progress Tracking</li>
-                <li>Streaming Support</li>
-                <li>Agent Chains</li>
+                <li>Use immutable state operations with <code>updateState()</code>.</li>
+                <li>Clear state between chain executions.</li>
+                <li>Preserve context variables in state.</li>
+                <li>Remember that handoff only copies state variables.</li>
             </ul>
-        </section>
-        <section id="core-concepts">
-            <h2>Core Concepts 🧠</h2>
-            <p>Agents are the fundamental building blocks in Murmuration, powered by Google's GenerativeModel. They support:</p>
+        </li>
+        <li><strong>Function Design</strong>
             <ul>
-                <li>Instructions defining behavior</li>
-                <li>Tools and functions</li>
-                <li>State management</li>
-                <li>Progress reporting</li>
+                <li>Always use <code>Map<String, dynamic></code> for parameters.</li>
+                <li>Follow the exact function call format in responses.</li>
+                <li>Handle missing or invalid parameters.</li>
+                <li>Test function call string parsing extensively.</li>
             </ul>
-        </section>
-        <section id="best-practices">
-            <h2>Best Practices 🏆</h2>
+        </li>
+        <li><strong>Error Handling</strong>
             <ul>
-                <li>Use immutable state operations.</li>
-                <li>Test function call string parsing thoroughly.</li>
+                <li>Catch <code>MurmurationError</code> separately.</li>
+                <li>Preserve original errors.</li>
                 <li>Log errors through <code>MurmurationLogger</code>.</li>
-                <li>Monitor streaming progress effectively.</li>
+                <li>Handle <code>GenerativeModel</code> errors properly.</li>
             </ul>
-        </section>
-        <section id="license">
-            <h2>License 📜</h2>
-            <p>This project is licensed under the MIT License.</p>
-        </section>
-    </main>
-    <footer>
-        <p>Authored by Agniva Maiti</p>
-        <p>© 2024 Murmuration Framework</p>
-    </footer>
+        </li>
+        <li><strong>Progress Monitoring</strong>
+            <ul>
+                <li>Implement <code>onProgress</code> callbacks.</li>
+                <li>Track timing with timestamps.</li>
+                <li>Log state transitions.</li>
+                <li>Monitor streaming progress.</li>
+            </ul>
+        </li>
+        <li><strong>Tool Integration</strong>
+            <ul>
+                <li>Define complete schemas.</li>
+                <li>Include parameter validation.</li>
+                <li>Document expected inputs/outputs.</li>
+                <li>Test tool execution thoroughly.</li>
+            </ul>
+        </li>
+        <li><strong>Streaming</strong>
+            <ul>
+                <li>Account for 50ms chunk delay.</li>
+                <li>Handle stream availability.</li>
+                <li>Implement proper stream cleanup.</li>
+                <li>Consider chunk size implications.</li>
+            </ul>
+        </li>
+    </ol>
+
+    <h2 id="contributing">Contributing</h2>
+    <p>Guidelines for contributing to Murmuration:</p>
+    <ol>
+        <li>Fork the repository.</li>
+        <li>Create a feature branch.</li>
+        <li>Submit a pull request.</li>
+    </ol>
+    <p>Please ensure your code:</p>
+    <ul>
+        <li>Follows Dart conventions.</li>
+        <li>Is properly documented.</li>
+        <li>Handles errors appropriately.</li>
+        <li>Includes type annotations.</li>
+    </ul>
+
+    <h2 id="license">License</h2>
+    <p>This project is licensed under the MIT License - see the <a href="LICENSE">LICENSE</a> file for details.</p>
+
+    <h2>Author</h2>
+    <p>This project is authored by <a href="https://github.com/AgnivaMaiti">Agniva Maiti</a>.</p>
+
 </body>
 </html>
