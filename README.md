@@ -1,3 +1,5 @@
+![Murmuration Logo](assets/logo.png)
+
 # Murmuration (1.0.0) 🐦✨
 
 Murmuration is a Dart framework designed for orchestrating multi-agent interactions using Google's Generative AI models. It aims to facilitate seamless agent coordination and function execution, providing an ergonomic interface for constructing complex AI workflows.
