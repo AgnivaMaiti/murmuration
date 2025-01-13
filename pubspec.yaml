@@ -1,6 +1,6 @@
 name: murmuration
 description: "A framework for multi-agent orchestration in Dart (Flutter)."
-version: 1.0.0
+version: 1.0.1
 homepage: https://github.com/AgnivaMaiti/murmuration
 
 environment:
