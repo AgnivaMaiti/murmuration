@@ -1,4 +1,4 @@
-![Murmuration Logo](assets/logo.png)
+![Murmuration Logo](assets/logo.jpg)
 
 # Murmuration (1.0.0) 🐦✨
 
