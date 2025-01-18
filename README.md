@@ -10,10 +10,26 @@ A robust Dart framework for orchestrating multi-agent interactions using Google'
 
 > The name "Murmuration" is inspired by the mesmerizing flocking behavior of birds, symbolizing the framework's focus on coordinated agent interactions and dynamic workflows. 🐦💫
 
+## What's New in Murmuration 2.0.0 🐦
+
+Version 2.0.0 introduces powerful new features and enhancements to improve your experience with Murmuration:
+
+- **Enhanced Schema Validation**: Redesigned for type safety and stricter validation.
+- **Thread-Safe State Management**: Immutable state with type-safe access methods.
+- **Improved Error Handling**: New `MurmurationException` class for detailed error insights.
+- **Message History Updates**: Persistent, thread-safe storage with automatic cleanup.
+- **New Configuration Options**: Cache support, retry policies, and more.
+- **Streaming Response Enhancements**: Better concurrency and progress tracking.
+
+### Breaking Changes
+
+This version includes significant changes that may require updates to your implementation. Please refer to the [Migration Guide](#migration-guide) for detailed steps to upgrade smoothly.
+
 ## Table of Contents 📚
 
 - [Overview](#overview)
 - [Installation](#installation)
+- [Migration Guide](#migration-guide)
 - [Core Features](#core-features)
 - [Usage Guide](#usage-guide)
   - [Basic Usage](#basic-usage)
@@ -61,6 +77,219 @@ Then run:
 ```bash
 dart pub get
 ```
+
+## Migration Guide from v1.0.0 to v2.0.0 🐦
+
+### 1. Update Dependencies
+
+Update your `pubspec.yaml`:
+
+```yaml
+dependencies:
+  murmuration: ^2.0.0
+  google_generative_ai: ^latest_version
+  shared_preferences: ^latest_version # New requirement
+  synchronized: ^latest_version # New requirement
+```
+
+### 2. Configuration Updates
+
+#### Before (1.0.0):
+
+```dart
+final config = MurmurationConfig(
+  apiKey: 'your-api-key',
+  model: 'gemini-1.5-flash-latest',
+  debug: false,
+  stream: false,
+  logger: MurmurationLogger()
+);
+```
+
+#### After (2.0.0):
+
+```dart
+final config = MurmurationConfig(
+  apiKey: 'your-api-key',
+  model: 'gemini-1.5-flash-latest',
+  debug: true,
+  stream: false,
+  logger: MurmurationLogger(enabled: true),
+  timeout: Duration(seconds: 30),  // New option
+  maxRetries: 3,                   // New option
+  retryDelay: Duration(seconds: 1),// New option
+  enableCache: true,               // New option
+  cacheTimeout: Duration(hours: 1) // New option
+);
+```
+
+### 3. Schema Validation Changes
+
+#### Before (1.0.0):
+
+```dart
+final schema = {
+  'type': 'object',
+  'properties': {
+    'name': {'type': 'string'},
+    'age': {'type': 'number'}
+  }
+};
+```
+
+#### After (2.0.0):
+
+```dart
+final schema = OutputSchema(
+  fields: {
+    'name': StringSchemaField(
+      description: 'User name',
+      minLength: 2,
+      required: true
+    ),
+    'age': IntSchemaField(
+      description: 'User age',
+      min: 0,
+      required: true
+    )
+  },
+  strict: true
+);
+```
+
+### 4. State Management Updates
+
+#### Before (1.0.0):
+
+```dart
+agent.updateState({'key': 'value'});
+final value = agent.getState()['key'];
+```
+
+#### After (2.0.0):
+
+```dart
+// State is now immutable
+final newState = state.copyWith({'key': 'value'});
+final value = state.get<String>('key');  // Type-safe access
+```
+
+### 5. Error Handling Improvements
+
+#### Before (1.0.0):
+
+```dart
+try {
+  final result = await agent.execute("Process data");
+} catch (e) {
+  print('Error: $e');
+}
+```
+
+#### After (2.0.0):
+
+```dart
+try {
+  final result = await agent.execute("Process data");
+} on MurmurationException catch (e) {
+  print('Error: ${e.message}');
+  print('Original error: ${e.originalError}');
+  print('Stack trace: ${e.stackTrace}');
+}
+```
+
+### 6. Message History Management
+
+#### Before (1.0.0):
+
+```dart
+// Basic message storage
+final messages = [];
+messages.add(message);
+```
+
+#### After (2.0.0):
+
+```dart
+final history = MessageHistory(
+  threadId: 'user-123',
+  maxMessages: 50,
+  maxTokens: 4000
+);
+
+await history.addMessage(Message(
+  role: 'user',
+  content: 'Hello!',
+  timestamp: DateTime.now()
+));
+
+await history.save();    // Persist to storage
+await history.load();    // Load from storage
+await history.clear();   // Clear history
+```
+
+### 7. Progress Tracking Updates
+
+#### Before (1.0.0):
+
+```dart
+final result = await murmur.run(
+  input: "Process this",
+  onProgress: (progress) {
+    print('Progress: ${progress.toString()}');
+  }
+);
+```
+
+#### After (2.0.0):
+
+```dart
+final result = await murmur.runAgentChain(
+  input: "Process this",
+  agentInstructions: [/* ... */],
+  logProgress: true,
+  onProgress: (progress) {
+    print('Agent: ${progress.currentAgent}/${progress.totalAgents}');
+    print('Status: ${progress.status}');
+    print('Output: ${progress.output}');
+  }
+);
+```
+
+### 8. Tool Integration Changes
+
+#### Before (1.0.0):
+
+```dart
+final tool = Tool(
+  name: 'processor',
+  description: 'Processes data',
+  execute: (params) async => processData(params)
+);
+```
+
+#### After (2.0.0):
+
+```dart
+final tool = Tool(
+  name: 'processor',
+  description: 'Processes data',
+  parameters: {
+    'data': StringSchemaField(
+      description: 'Input data to process',
+      required: true
+    ),
+    'format': StringSchemaField(
+      description: 'Output format',
+      enumValues: ['json', 'xml', 'text'],
+      required: true
+    )
+  },
+  execute: (params) async => processData(params)
+);
+```
+
+For any migration issues or questions, please open an issue on GitHub or contact the maintainers.
 
 ## Core Features 🛠️
 

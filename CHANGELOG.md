@@ -12,7 +12,7 @@ All notable changes to this project will be documented in this file.
 - Added new validation system with `ValidationResult` class
 - Changed Agent class to use builder pattern for construction
 - Introduced immutable `MurmurationConfig` with expanded options
-- Modified core classes' constructors and public APIs
+- Modified core classes' constructors
 
 ### Added
 
@@ -21,7 +21,7 @@ All notable changes to this project will be documented in this file.
 - Thread-safe caching mechanism for message history
 - Type-safe schema validation for input/output
 - Memory management features for long-running conversations
-- Comprehensive retry mechanisms with configurable policies
+- Example implementation of murmuration for a chatbot and text classifier
 
 ### Changed
 
