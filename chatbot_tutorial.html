@@ -1,0 +1,327 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Building a Chatbot with Murmuration and Flutter 🐦✨</title>
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&display=swap" rel="stylesheet">
+    <style>
+        body {
+            margin: 0;
+            font-family: 'Roboto', sans-serif;
+            background: linear-gradient(to bottom, #0175C2, #1E1E1E);
+            color: #ECEFF1;
+        }
+
+        header {
+            background: #02569B;
+            padding: 20px;
+            text-align: center;
+            box-shadow: 0px 4px 6px rgba(0, 0, 0, 0.2);
+        }
+
+        header h1 {
+            font-size: 2.5rem;
+            margin: 0;
+            color: #FFFFFF;
+        }
+
+        .content {
+            max-width: 800px;
+            margin: 20px auto;
+            padding: 20px;
+            background: #263238;
+            border-radius: 10px;
+            box-shadow: 0px 6px 10px rgba(0, 0, 0, 0.3);
+            text-align: left;
+        }
+
+        .content h2 {
+            color: #0288D1;
+            border-bottom: 2px solid #0288D1;
+            padding-bottom: 5px;
+        }
+
+        .code-block {
+            background: #37474F;
+            padding: 15px;
+            border-radius: 5px;
+            overflow-x: auto;
+        }
+
+        .code-block pre {
+            margin: 0;
+            color: #ECEFF1;
+        }
+
+        footer {
+            text-align: center;
+            padding: 10px;
+            background: #02569B;
+            margin-top: 20px;
+            color: #B3E5FC;
+        }
+    </style>
+</head>
+
+<body>
+    <header>
+        <h1>Building a Chatbot with Murmuration and Flutter 🐦✨</h1>
+    </header>
+
+    <div class="content">
+        <h2>Introduction</h2>
+        <p>In this tutorial, we will create a simple chatbot application using the Murmuration framework and Flutter. This application will allow users to interact with a chatbot, sending messages and receiving responses in real-time. We will also implement local storage to save chat history using the <code>shared_preferences</code> package.</p>
+
+        <h2>Prerequisites</h2>
+        <ul>
+            <li>Flutter SDK installed on your machine.</li>
+            <li>A basic understanding of Dart and Flutter.</li>
+            <li>An API key for the Murmuration framework.</li>
+        </ul>
+
+        <h2>Step 1: Setting Up Your Flutter Project</h2>
+        <ol>
+            <li><strong>Create a new Flutter project:</strong>
+                <pre>flutter create murmuration_chatbot
+cd murmuration_chatbot</pre>
+            </li>
+            <li><strong>Add dependencies:</strong> Open <code>pubspec.yaml</code> and add the following dependencies:
+                <div class="code-block">
+                    <pre>dependencies:
+  flutter:
+    sdk: flutter
+  murmuration: ^latest_version
+  shared_preferences: ^latest_version</pre>
+                </div>
+            </li>
+            <li><strong>Install the dependencies:</strong>
+                <pre>flutter pub get</pre>
+            </li>
+        </ol>
+
+        <h2>Step 2: Building the Chatbot Application</h2>
+
+        <h3>2.1 Main Application Entry Point</h3>
+        <p>In <code>lib/main.dart</code>, we will set up the main entry point of our application:</p>
+        <div class="code-block">
+            <pre>import 'package:flutter/material.dart';
+import 'package:murmuration/murmuration.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+import 'dart:convert';
+
+void main() {
+  runApp(MyApp());
+}
+
+class MyApp extends StatelessWidget {
+  @override
+  Widget build(BuildContext context) {
+    return MaterialApp(
+      title: 'Murmuration Chatbot',
+      theme: ThemeData(
+        primarySwatch: Colors.blue,
+        visualDensity: VisualDensity.adaptivePlatformDensity,
+      ),
+      home: ChatScreen(),
+    );
+  }
+}</pre>
+        </div>
+
+        <h3>2.2 Creating the Chat Screen</h3>
+        <p>Next, we will create the <code>ChatScreen</code> widget, which will handle user interactions and display chat messages.</p>
+        <div class="code-block">
+            <pre>class ChatScreen extends StatefulWidget {
+  @override
+  _ChatScreenState createState() => _ChatScreenState();
+}
+
+class _ChatScreenState extends State<ChatScreen> {
+  final TextEditingController _controller = TextEditingController();
+  final List<Message> _messages = [];
+  late Agent _agent;
+  String _selectedLanguage = 'en';
+
+  @override
+  void initState() {
+    super.initState();
+    _initializeAgent();
+    _loadMessages();
+  }
+
+  Future<void> _initializeAgent() async {
+    final config = MurmurationConfig(apiKey: 'add-your-api-key');
+    _agent = await Murmuration(config).createAgent({
+      'role': 'Assistant',
+      'language': _selectedLanguage,
+    });
+  }
+
+  Future<void> _loadMessages() async {
+    final prefs = await SharedPreferences.getInstance();
+    final savedMessages = prefs.getStringList('chat_history') ?? [];
+    setState(() {
+      _messages.addAll(savedMessages.map((msg) => Message.fromJson(msg)).toList());
+    });
+  }
+
+  Future<void> _saveMessage(Message message) async {
+    final prefs = await SharedPreferences.getInstance();
+    final savedMessages = prefs.getStringList('chat_history') ?? [];
+    savedMessages.add(message.toJson());
+    await prefs.setStringList('chat_history', savedMessages);
+  }
+
+  Future<void> _sendMessage() async {
+    if (_controller.text.isEmpty) return;
+
+    final userMessage = Message(role: 'user', content: _controller.text);
+    setState(() {
+      _messages.add(userMessage);
+    });
+    _controller.clear();
+
+    await _saveMessage(userMessage);
+
+    final result = await _agent.call(userMessage.content);
+    final assistantMessage = Message(role: 'assistant', content: result.output);
+
+    setState(() {
+      _messages.add(assistantMessage);
+    });
+    await _saveMessage(assistantMessage);
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(
+        title: Text('Murmuration Chatbot'),
+        actions: [
+          DropdownButton<String>(
+            value: _selectedLanguage,
+            items: <String>['en', 'es', 'fr', 'de']
+                .map<DropdownMenuItem<String>>((String value) {
+              return DropdownMenuItem<String>(
+                value: value,
+                child: Text(value),
+              );
+            }).toList(),
+            onChanged: (String? newValue) {
+              setState(() {
+                _selectedLanguage = newValue!;
+                _initializeAgent();
+              });
+            },
+          ),
+        ],
+      ),
+      body: Column(
+        children: [
+          Expanded(
+            child: ListView.builder(
+              padding: const EdgeInsets.all(8.0),
+              itemCount: _messages.length,
+              itemBuilder: (context, index) {
+                final message = _messages[index];
+                return _buildMessageTile(message);
+              },
+            ),
+          ),
+          _buildInputField(),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildMessageTile(Message message) {
+    final isUser Message = message.role == 'user';
+    return Container(
+      margin: const EdgeInsets.symmetric(vertical: 4.0),
+      padding: const EdgeInsets.all(10.0),
+      decoration: BoxDecoration(
+        color: isUser Message ? Colors.blue[100] : Colors.grey[200],
+        borderRadius: BorderRadius.circular(8.0),
+      ),
+      alignment: isUser Message ? Alignment.centerRight : Alignment.centerLeft,
+      child: Column(
+        crossAxisAlignment: isUser Message ? CrossAxisAlignment.end : CrossAxisAlignment.start,
+        children: [
+          Text(
+            message.role,
+            style: TextStyle(
+              fontWeight: FontWeight.bold,
+              color: isUser Message ? Colors.blue : Colors.black,
+            ),
+          ),
+          SizedBox(height: 4.0),
+          Text(
+            message.content,
+            style: TextStyle(fontSize: 16.0),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildInputField() {
+    return Padding(
+      padding: const EdgeInsets.all(8.0),
+      child: Row(
+        children: [
+          Expanded(
+            child: TextField(
+              controller: _controller,
+              decoration: InputDecoration(
+                hintText: 'Type your message...',
+                border: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(30.0),
+                  borderSide: BorderSide(color: Colors.blue),
+                ),
+                filled: true,
+                fillColor: Colors.white,
+              ),
+            ),
+          ),
+          const SizedBox(width: 8.0),
+          IconButton(
+            icon: const Icon(Icons.send, color: Colors.blue),
+            onPressed: _sendMessage,
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+// Message class to represent a chat message
+class Message {
+  final String role;
+  final String content;
+
+  Message({required this.role, required this.content});
+
+  String toJson() {
+    return '{"role": "$role", "content": "$content"}';
+  }
+
+  static Message fromJson(String json) {
+    final data = jsonDecode(json);
+    return Message(role: data['role'], content: data['content']);
+  }
+}</pre>
+        </div>
+
+        <h2>Conclusion</h2>
+        <p>Congratulations! You have successfully built a simple chatbot application using the Murmuration framework and Flutter. This application allows users to send messages and receive responses from a chatbot, with chat history saved locally.</p>
+        <p>Feel free to expand upon this example by adding more features, such as user authentication, advanced message handling, or integrating additional APIs.</p>
+    </div>
+
+    <footer>
+        <p>Created by <strong>Agniva Maiti</strong> © 2025.</p>
+    </footer>
+</body>
+
+</html>
