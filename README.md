@@ -1,6 +1,10 @@
-# Murmuration (1.0.0) 🐦✨
+# Murmuration (2.0.0) 🐦✨
 
-Murmuration is a Dart framework designed for orchestrating multi-agent interactions using Google's Generative AI models. It aims to facilitate seamless agent coordination and function execution, providing an ergonomic interface for constructing complex AI workflows.
+![Version](https://img.shields.io/badge/version-2.0.0-blue.svg)
+
+![murmurationpic](https://raw.githubusercontent.com/AgnivaMaiti/murmuration/refs/heads/main/assets/logo.png)
+
+A robust Dart framework for orchestrating multi-agent interactions using Google's Generative AI models. Murmuration provides type-safe, thread-safe, and reliable systems for agent coordination, state management, and function execution.
 
 > [⚠️WARNING] If you plan to use this in production, ensure you have proper error handling and testing in place as interaction with AI models can be unpredictable.
 
@@ -8,19 +12,37 @@ Murmuration is a Dart framework designed for orchestrating multi-agent interacti
 
 ## Table of Contents 📚
 
+- [Overview](#overview)
 - [Installation](#installation)
-- [Quick Start](#quick-start)
-- [Key Features](#key-features)
-- [Core Concepts](#core-concepts)
-- [Progress Tracking](#progress-tracking)
-- [Streaming Support](#streaming-support)
-- [Debugging](#debugging)
-- [Error Handling](#error-handling)
-- [API Reference](#api-reference)
+- [Core Features](#core-features)
+- [Usage Guide](#usage-guide)
+  - [Basic Usage](#basic-usage)
+  - [Advanced Usage](#advanced-usage)
+  - [Streaming Responses](#streaming-responses)
+  - [Schema Validation](#schema-validation)
+  - [State Management](#state-management)
+  - [Agent Chains](#agent-chains)
+- [Architecture Overview](#architecture-overview)
+- [Core Systems](#core-systems)
+- [Real-World Examples](#real-world-examples)
+- [Troubleshooting](#troubleshooting)
 - [Best Practices](#best-practices)
-- [Examples](#examples)
 - [Contributing](#contributing)
 - [License](#license)
+- [Author](#author)
+
+## Overview 🔍
+
+Murmuration offers:
+
+- Type-safe schema validation system for ensuring data integrity
+- Thread-safe state management to prevent race conditions
+- Robust error handling with detailed error reporting
+- Message history management with persistence
+- Tool and function integration for extended capabilities
+- Agent chain orchestration for complex workflows
+- Streaming response support for real-time processing
+- Comprehensive logging for debugging and monitoring
 
 ## Installation ⚙️
 
@@ -28,8 +50,10 @@ Add to your `pubspec.yaml`:
 
 ```yaml
 dependencies:
-  murmuration: ^latest_version
+  murmuration: ^2.0.0
   google_generative_ai: ^latest_version
+  shared_preferences: ^latest_version
+  synchronized: ^latest_version
 ```
 
 Then run:
@@ -38,379 +62,389 @@ Then run:
 dart pub get
 ```
 
-## Quick Start 🚀
+## Core Features 🛠️
+
+### Configuration
 
 ```dart
-import 'package:murmuration/murmuration.dart';
-import 'package:google_generative_ai/google_generative_ai.dart';
+final config = MurmurationConfig(
+  apiKey: 'your-api-key',
+  model: 'gemini-1.5-pro',  // Specify the model to use
+  debug: true,              // Enable debug mode for verbose logging
+  stream: false,            // Disable streaming by default
+  logger: MurmurationLogger(enabled: true),  // Enable logging
+  timeout: Duration(seconds: 30),  // Set request timeout
+  maxRetries: 3,           // Number of retry attempts
+  retryDelay: Duration(seconds: 1),  // Delay between retries
+  enableCache: true,       // Enable response caching
+  cacheTimeout: Duration(hours: 1)  // Cache expiration time
+);
+```
 
+### Error Handling
+
+Murmuration uses the `MurmurationException` class for error handling. This allows you to catch and handle errors gracefully during agent execution. Example:
+
+```dart
+try {
+  final result = await agent.execute("Process data");
+} on MurmurationException catch (e) {
+  print('Error: ${e.message}');  // Human-readable error message
+  print('Original error: ${e.originalError}');  // Original exception
+  print('Stack trace: ${e.stackTrace}');  // Full stack trace
+}
+```
+
+### Logging
+
+You can enable logging using the `MurmurationLogger` class to track events and errors:
+
+```dart
+final logger = MurmurationLogger(
+  enabled: true,
+  onLog: (message) => print('Log: $message'),  // Log handler
+  onError: (message, error, stackTrace) {      // Error handler
+    print('Error: $message');
+    print('Details: $error');
+  }
+);
+```
+
+## Architecture Overview 🏗️
+
+Murmuration is built on several core systems that work together to provide a robust framework:
+
+1. **Core Systems**
+
+   - Error Handling System: Manages exceptions and error reporting
+   - Schema Validation System: Ensures data integrity
+   - State Management System: Handles thread-safe state updates
+   - Message History System: Manages conversation context
+   - Logging System: Tracks events and errors
+   - Configuration Management: Handles framework settings
+   - Agent Management: Coordinates AI model interactions
+   - Tool and Function Management: Handles external integrations
+   - Execution and Progress Tracking: Monitors workflow status
+
+2. **Key Components**
+   - `Murmuration`: Main class orchestrating all components
+   - `Agent`: Core class handling AI model interactions
+   - `MurmurationConfig`: Configuration management
+   - `MessageHistory`: Thread-safe message management
+   - `ImmutableState`: Thread-safe state management
+   - `SchemaField`: Type-safe validation system
+
+## Core Systems 🔧
+
+### 1. Message History
+
+Thread-safe message management with persistence:
+
+```dart
+final history = MessageHistory(
+  threadId: 'user-123',       // Unique thread identifier
+  maxMessages: 50,            // Maximum messages to retain
+  maxTokens: 4000             // Maximum total tokens
+);
+
+await history.addMessage(Message(
+  role: 'user',
+  content: 'Hello!',
+  timestamp: DateTime.now()
+));
+
+await history.save();    // Persist to storage
+await history.load();    // Load from storage
+await history.clear();   // Clear history
+```
+
+### 2. State Management
+
+Thread-safe, immutable state operations:
+
+```dart
+final state = ImmutableState()
+  .copyWith({
+    'user': {'name': 'John', 'age': 30},
+    'preferences': {'theme': 'dark'}
+  });
+
+final userName = state.get<String>('user.name');  // Type-safe access
+```
+
+## Usage Guide 📖
+
+### Basic Usage
+
+```dart
 void main() async {
-  final config = MurmurationConfig(
-    apiKey: 'your-api-key',
-    model: 'gemini-1.5-flash-latest',
-    debug: false,
-    stream: false,
-    logger: MurmurationLogger()
-  );
-
   final murmur = Murmuration(config);
 
-  final result = await murmur.run(
-    input: "Hello!",
-    agentInstructions: {
-      'role': 'You are a helpful assistant.'
-    },
-    stateVariables: {},  // Optional initial state
-    tools: [],           // Optional tools
-    functions: {},       // Optional function handlers
-    onProgress: null     // Optional progress callback
+  final agent = await murmur.createAgent(
+    {'role': 'Assistant', 'context': 'Data processing'},
+    currentAgentIndex: 1,
+    totalAgents: 1
   );
 
+  final result = await agent.execute("Process this data");
   print(result.output);
 }
 ```
 
-## Why Murmuration? 🤔
+### Advanced Usage
 
-Murmuration is designed for situations where you need:
-
-- Multiple specialized agents working together 🤝
-- Complex function calling and tool usage with specific response formats 🔧
-- State management and context preservation across agent interactions 📊
-- Detailed progress tracking and logging 📈
-- Real-time streaming of responses with configurable delay ⏳
-- Integration with Google's Generative AI models 🌐
-
-## Key Features 🌟
-
-- **Streamlined Agent Management**: Create and coordinate multiple agents with distinct roles and capabilities
-- **Function Registration**: Register custom functions with specific parameter types that agents can invoke
-- **Tool Integration**: Add specialized tools with defined schemas for agent use
-- **State Management**: Built-in state handling for maintaining context across agent interactions
-- **Progress Tracking**: Detailed progress monitoring with timestamps and status updates
-- **Streaming Support**: Real-time streaming of agent responses with configurable delays
-- **Agent Chains**: Sequential execution of multiple agents with automatic state handoff
-
-## Core Concepts 🧠
-
-### Agents
-
-Agents are the fundamental building blocks in Murmuration. Each agent is powered by Google's GenerativeModel and encapsulates:
-
-- Instructions defining its behavior
-- Available tools and functions
-- State management capabilities
-- Progress reporting mechanisms
+#### Custom Schema Fields
 
 ```dart
-final agent = murmur.createAgent(
-  {'role': 'You analyze data and provide insights.'},
-  currentAgentIndex: 1,      // Optional: for chain positioning
-  totalAgents: 1,            // Optional: total agents in chain
-  onProgress: (progress) {   // Optional: progress tracking
-    print(progress.toString());
+class DateTimeSchemaField extends SchemaField<DateTime> {
+  final DateTime? minDate;
+  final DateTime? maxDate;
+
+  const DateTimeSchemaField({
+    required String description,
+    this.minDate,
+    this.maxDate,
+    bool required = true,
+  }) : super(
+    description: description,
+    required: required,
+  );
+
+  @override
+  bool isValidType(Object? value) =>
+    value == null ||
+    value is DateTime ||
+    (value is String && DateTime.tryParse(value) != null);
+
+  @override
+  bool validate(DateTime? value) {
+    if (value == null) return !required;
+    if (minDate != null && value.isBefore(minDate!)) return false;
+    if (maxDate != null && value.isAfter(maxDate!)) return false;
+    return true;
   }
-);
 
-// Registering a function with proper type annotation
-agent.registerFunction(
-  'analyzeData',
-  (Map<String, dynamic> params) {
-    // Analyze data logic here
-    return 'Analysis complete';
+  @override
+  DateTime? convert(Object? value) {
+    if (value == null) return null;
+    if (value is DateTime) return value;
+    if (value is String) return DateTime.tryParse(value);
+    return null;
   }
-);
-```
-
-### Function Handlers and Response Format
-
-Functions must follow a specific format for registration and invocation. The Agent class detects function calls by searching for the text "function:" in the model's response:
-
-````dart
-// Function handler type definition
-typedef FunctionHandler = dynamic Function(Map<String, dynamic>);
-
-// Registering a function
-void registerDataFunction(Agent agent) {
-  agent.registerFunction('processData', (Map<String, dynamic> params) {
-    // Access context variables if available
-    final contextVars = params['context_variables'];
-    // Process data
-    return {'result': 'Processed data'};
-  });
 }
 
-// Function call format in agent responses ```dart
-// The agent must return text in this EXACT format:
-// function: functionName(param1: value1, param2: value2)
-// Note: The format must match exactly, including spaces after colons
-````
-
-### Tools 🛠️
-
-Tools must be defined with complete schemas and type-safe execution functions:
-
-```dart
-final dataTool = Tool(
-  name: 'data_processor',
-  description: 'Processes raw data into structured format',
-  schema: {
-    'type': 'object',
-    'properties': {
-      'data': {'type': 'string'},
-      'format': {'type': 'string'}
-    }
-  },
-  execute: (Map<String, dynamic> params) {
-    // Tool execution logic
-    return 'Processed result';
+// Usage example:
+final schema = OutputSchema(
+  fields: {
+    'name': StringSchemaField(
+      description: 'User name',
+      minLength: 2,
+      required: true
+    ),
+    'birthDate': DateTimeSchemaField(
+      description: 'Birth date',
+      minDate: DateTime(1900),
+      maxDate: DateTime.now(),
+      required: true
+    )
   }
 );
-
-agent.registerTool(dataTool);
 ```
 
-### Agent Chains and State Management 🔗
+### Streaming Responses 🌊
 
-Create sequences of agents with state handoff. Note that the handoff method only copies state variables and doesn't transfer other agent properties:
+```dart
+final config = MurmurationConfig(
+  apiKey: 'your-api-key',
+  stream: true  // Enable streaming
+);
+
+final agent = await murmur.createAgent({'role': 'Assistant'});
+final result = await agent.execute("Generate a long story");
+
+if (result.stream != null) {
+  await for (final chunk in result.stream!) {
+    print(chunk);  // Process each chunk as it arrives
+  }
+}
+```
+
+### Agent Chains ⛓️
+
+Example of a complex document processing chain:
 
 ```dart
 final result = await murmur.runAgentChain(
-  input: "Analyze this data",
+  input: documentText,
   agentInstructions: [
-    {'role': 'You clean and prepare data'},
-    {'role': 'You analyze prepared data'},
-    {'role': 'You create summaries of analysis'}
-  ],
-  tools: [],                    // Optional tools shared across chain
-  functions: {},                // Optional functions shared across chain
-  logProgress: true,            // Enable progress logging
-  onProgress: (progress) {      // Optional progress callback
-    print(progress.toString());
-  }
-);
-
-// Access chain results
-print(result.finalOutput);          // Final chain output
-print(result.results.length);       // Number of agent results
-print(result.progress.length);      // Number of progress records
-```
-
-## Progress Tracking 📊
-
-Progress tracking includes timestamps and detailed status information:
-
-```dart
-final result = await murmur.run(
-  input: "Process this task",
-  onProgress: (progress) {
-    print('Agent ${progress.currentAgent}/${progress.totalAgents}');
-    print('Status: ${progress.status}');
-    print('Output: ${progress.output}');
-    print('Time: ${progress.timestamp}');
-  }
-);
-```
-
-## Streaming Support 🌊
-
-Enable real-time streaming with configurable delay. The streaming implementation uses GenerativeModel's response text, splitting it into chunks with a 50ms delay:
-
-```dart
-final config = MurmurationConfig(
-  apiKey: 'your-api-key',
-  stream: true,  // Enable streaming
-  debug: true    // Optional: enable debug logging
-);
-
-final murmur = Murmuration(config);
-final result = await murmur.run(
-  input: "Stream this response",
-  onProgress: (progress) {
-    print('Streaming: ${progress.status}');
-  }
-);
-
-// Stream includes 50ms delay between chunks
-// Chunks are created by splitting the response text on spaces
-await for (final chunk in result.stream!) {
-  print(chunk);
-}
-```
-
-Internal streaming implementation details:
-
-- Uses StreamController to manage the stream
-- Splits response text on spaces for chunk creation
-- Adds artificial 50ms delay between chunks
-- Reports progress for each chunk streamed
-
-## Debugging 🐞
-
-Enable comprehensive debug logging:
-
-```dart
-final config = MurmurationConfig(
-  apiKey: 'your-api-key',
-  debug: true,
-  logger: MurmurationLogger(
-    enabled: true,
-    onLog: (message) {
-      print('LOG: $message');
+    {
+      'role': 'Document Parser',
+      'context': 'Extract key information from documents'
     },
-    onError: (message) {
-      print('ERROR: $message');
+    {
+      'role': 'Data Analyzer',
+      'context': 'Analyze and categorize extracted information'
+    },
+    {
+      'role': 'Report Generator',
+      'context': 'Generate comprehensive report'
     }
-  )
+  ],
+  tools: [
+    Tool(
+      name: 'document_parser',
+      description: 'Parses document text',
+      parameters: {'text': StringSchemaField(description: 'Document text')},
+      execute: (params) async => parseDocument(params['text'])
+    )
+  ],
+  functions: {
+    'analyze': (params) async => analyzeData(params),
+    'generate_report': (params) async => generateReport(params)
+  },
+  logProgress: true,
+  onProgress: (progress) {
+    print('Progress: ${progress.currentAgent}/${progress.totalAgents}');
+    print('Status: ${progress.status}');
+  }
+);
+
+print('Final report: ${result.finalOutput}');
+```
+
+## Real-World Examples 💡
+
+### Customer Support Bot
+
+```dart
+final supportBot = await murmur.createAgent({
+  'role': 'Customer Support',
+  'context': '''
+    You are a helpful customer support agent.
+    Follow company guidelines and maintain professional tone.
+    Escalate sensitive issues to human support.
+  '''
+});
+
+// Add ticket management tool
+supportBot.addTool(Tool(
+  name: 'create_ticket',
+  description: 'Creates support ticket',
+  parameters: {
+    'priority': StringSchemaField(
+      description: 'Ticket priority',
+      enumValues: ['low', 'medium', 'high']
+    ),
+    'category': StringSchemaField(description: 'Issue category')
+  },
+  execute: (params) async => createSupportTicket(params)
+));
+
+final response = await supportBot.execute(userQuery);
+```
+
+### Data Processing Pipeline
+
+```dart
+final pipeline = await murmur.runAgentChain(
+  input: rawData,
+  agentInstructions: [
+    {'role': 'Data Validator'},
+    {'role': 'Data Transformer'},
+    {'role': 'Data Analyzer'},
+    {'role': 'Report Generator'}
+  ],
+  tools: [
+    Tool(
+      name: 'data_validation',
+      description: 'Validates data format',
+      execute: validateData
+    ),
+    Tool(
+      name: 'data_transform',
+      description: 'Transforms data format',
+      execute: transformData
+    )
+  ]
 );
 ```
 
-## Error Handling ⚠️
+## Troubleshooting 🔍
 
-Comprehensive error handling with original error preservation:
+### Common Issues
 
-```dart
-try {
-  final result = await murmur.run(
-    input: "Process this",
-    agentInstructions: {'role': 'Assistant'}
-  );
+1. **Timeout Errors**
 
-  // Check for stream availability
-  if (result.stream != null) {
-    await for (final chunk in result.stream!) {
-      // Handle streaming response
-    }
-  } else {
-    // Handle regular response
-    print(result.output);
-  }
-} on MurmurationError catch (e) {
-  print('Murmuration Error: ${e.message}');
-  if (e.originalError != null) {
-    print('Original Error: ${e.originalError}');
-  }
-} catch (e) {
-  print('Unexpected Error: $e');
-}
-```
+   ```dart
+   // Increase timeout duration
+   final config = MurmurationConfig(
+     timeout: Duration(minutes: 2),
+     maxRetries: 5
+   );
+   ```
 
-## API Reference 📖
+2. **Memory Issues**
 
-### MurmurationConfig
+   ```dart
+   // Manage message history
+   final config = MurmurationConfig(
+     maxMessages: 30,
+     maxTokens: 2000
+   );
+   ```
 
-Configuration options for the Murmuration instance:
-
-```dart
-final config = MurmurationConfig(
-  apiKey: 'required-api-key',
-  model: 'gemini-1.5-flash-latest',  // Default model
-  debug: false,                      // Default debug mode
-  stream: false,                     // Default streaming mode
-  logger: MurmurationLogger(         // Optional logger
-    enabled: false,
-    onLog: null,
-    onError: null
-  )
-);
-```
-
-### Agent Functions
-
-Core agent manipulation methods:
-
-- `registerFunction(String name, FunctionHandler handler)`: Add custom function handlers
-- `registerTool(Tool tool)`: Add specialized tools
-- `updateState(Map<String, dynamic> newState)`: Modify agent state
-- `handoff(Agent nextAgent)`: Transfer state variables to another agent
-- `execute(String input)`: Run the agent with input
-
-### Result Types
-
-```dart
-// Agent execution result
-class AgentResult {
-  final String output;
-  final Map<String, dynamic> stateVariables;
-  final List<String> toolCalls;
-  final Stream<String>? stream;
-  final List<AgentProgress>? progress;
-}
-
-// Chain execution result
-class ChainResult {
-  final List<AgentResult> results;
-  final String finalOutput;
-  final List<AgentProgress> progress;
-}
-
-// Progress tracking information
-class AgentProgress {
-  final int currentAgent;
-  final int totalAgents;
-  final String status;
-  final String? output;
-  final DateTime timestamp;
-}
-```
+3. **State Management Issues**
+   ```dart
+   // Use proper state copying
+   final newState = state.copyWith(newData);
+   // Don't modify state directly
+   state._data['key'] = value;  // Wrong!
+   ```
 
 ## Best Practices 🏆
 
-1. **State Management**
+1. **Error Handling**
 
-   - Use immutable state operations with `updateState()`
-   - Clear state between chain executions
-   - Preserve context variables in state
-   - Remember that handoff only copies state variables
+   - Always wrap agent execution in try-catch blocks
+   - Implement proper retry mechanisms
+   - Log errors comprehensively
+   - Handle timeouts appropriately
 
-2. **Function Design**
+2. **Performance**
 
-   - Always use `Map<String, dynamic>` for parameters
-   - Follow the exact function call format in responses
-   - Handle missing or invalid parameters
-   - Test function call string parsing extensively
+   - Enable caching for repetitive tasks
+   - Implement cleanup mechanisms
+   - Monitor memory usage
+   - Use appropriate timeout values
 
-3. **Error Handling**
+3. **Security**
 
-   - Catch `MurmurationError` separately
-   - Preserve original errors
-   - Log errors through MurmurationLogger
-   - Handle GenerativeModel errors properly
+   - Validate all inputs
+   - Handle sensitive data carefully
+   - Implement proper access controls
+   - Monitor API usage
 
-4. **Progress Monitoring**
-
-   - Implement `onProgress` callbacks
-   - Track timing with timestamps
-   - Log state transitions
-   - Monitor streaming progress
-
-5. **Tool Integration**
-
-   - Define complete schemas
-   - Include parameter validation
-   - Document expected inputs/outputs
-   - Test tool execution thoroughly
-
-6. **Streaming**
-   - Account for 50ms chunk delay
-   - Handle stream availability
-   - Implement proper stream cleanup
-   - Consider chunk size implications
+4. **Message History**
+   - Set appropriate message limits
+   - Implement cleanup policies
+   - Handle thread IDs carefully
+   - Monitor storage usage
 
 ## Contributing 🤝
 
-Guidelines for contributing to Murmuration:
-
 1. Fork the repository
 2. Create a feature branch
-3. Submit a pull request
+3. Implement your changes
+4. Add tests
+5. Submit a pull request
 
 Please ensure your code:
 
 - Follows Dart conventions
-- Is properly documented
-- Handles errors appropriately
-- Includes type annotations
+- Includes proper documentation
+- Has comprehensive error handling
+- Includes appropriate tests
+- Maintains type safety
 
 ## License 📜
 
@@ -418,4 +452,4 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 
 ## Author ✍️
 
-This project is authored by [Agniva Maiti](https://github.com/AgnivaMaiti).
+This project is authored and maintained by [Agniva Maiti](https://github.com/AgnivaMaiti).

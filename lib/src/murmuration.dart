@@ -1,13 +1,12 @@
 import 'package:google_generative_ai/google_generative_ai.dart';
-import 'murmuration_config.dart';
-import 'agent.dart';
-import 'models.dart';
-import 'types.dart';
+import 'package:synchronized/synchronized.dart';
+import 'dart:async';
+import '../../murmuration.dart';
 
-// Main class
 class Murmuration {
   final MurmurationConfig config;
   final GenerativeModel _model;
+  final Lock _lock = Lock();
 
   Murmuration(this.config)
       : _model = GenerativeModel(
@@ -15,61 +14,34 @@ class Murmuration {
           apiKey: config.apiKey,
         );
 
-  // Create an agent
-  Agent createAgent(
+  Future<Agent> createAgent(
     Map<String, dynamic> instructions, {
     int currentAgentIndex = 1,
     int totalAgents = 1,
     ProgressCallback? onProgress,
-  }) {
-    return Agent(
-      _model,
-      instructions,
-      stream: config.stream,
-      logger: config.logger,
-      currentAgentIndex: currentAgentIndex,
-      totalAgents: totalAgents,
-      onProgress: onProgress,
-    );
-  }
-
-  // Run an agent
-  Future<AgentResult> run({
-    required String input,
-    Map<String, dynamic> stateVariables = const {},
-    Map<String, dynamic> agentInstructions = const {},
-    List<MurmurationTool> tools = const [],
-    Map<String, FunctionHandler> functions = const {},
-    ProgressCallback? onProgress,
   }) async {
-    final agent = createAgent(agentInstructions, onProgress: onProgress);
-
-    for (final entry in functions.entries) {
-      agent.registerFunction(entry.key, entry.value);
-    }
-
-    agent.updateState({
-      ...stateVariables,
-      'context_variables': stateVariables,
-    });
-
-    for (final tool in tools) {
-      agent.registerTool(tool);
-    }
-
-    if (config.debug) {
-      config.logger.log('Running agent with input: $input');
-      config.logger.log('State variables: $stateVariables');
-    }
-
-    return await agent.execute(input);
+    return await Agent.builder(_model)
+        .withState(instructions)
+        .withConfig(config)
+        .withProgress(
+          current: currentAgentIndex,
+          total: totalAgents,
+          callback: onProgress,
+        )
+        .build();
   }
 
-  // Run an agent chain
+  Future<void> clearHistory(String threadId) async {
+    await _lock.synchronized(() async {
+      final history = MessageHistory(threadId: threadId);
+      await history.clear();
+    });
+  }
+
   Future<ChainResult> runAgentChain({
     required String input,
     required List<Map<String, dynamic>> agentInstructions,
-    List<MurmurationTool> tools = const [],
+    List<Tool> tools = const [],
     Map<String, FunctionHandler> functions = const {},
     bool logProgress = false,
     ProgressCallback? onProgress,
@@ -79,7 +51,7 @@ class Murmuration {
     String currentInput = input;
 
     for (var i = 0; i < agentInstructions.length; i++) {
-      final agent = createAgent(
+      final agent = await createAgent(
         agentInstructions[i],
         currentAgentIndex: i + 1,
         totalAgents: agentInstructions.length,
@@ -91,13 +63,12 @@ class Murmuration {
         },
       );
 
-      if (i == 0) {
-        for (final tool in tools) {
-          agent.registerTool(tool);
-        }
-        for (final entry in functions.entries) {
-          agent.registerFunction(entry.key, entry.value);
-        }
+      for (final tool in tools) {
+        agent.addTool(tool);
+      }
+
+      for (final entry in functions.entries) {
+        agent.addFunction(entry.key, entry.value);
       }
 
       final result = await agent.execute(currentInput);
