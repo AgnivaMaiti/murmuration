@@ -23,7 +23,7 @@ Version 2.0.0 introduces powerful new features and enhancements to improve your 
 
 ### Breaking Changes
 
-This version includes significant changes that may require updates to your implementation. Please refer to the [Migration Guide](#migration) for detailed steps to upgrade smoothly.
+This version includes significant changes that may require updates to your implementation. Please refer to the [Migration Guide](https://agnivamaiti.github.io/murmuration/migration-guide.html) for detailed steps to upgrade smoothly.
 
 ## Table of Contents 📚
 
@@ -43,6 +43,7 @@ This version includes significant changes that may require updates to your imple
 - [Troubleshooting](#troubleshooting)
 - [Best Practices](#best-practices)
 - [Contributing](#contributing)
+- [Tutorials](#tutorials)
 - [License](#license)
 - [Author](#author)
 
@@ -461,9 +462,18 @@ Please ensure your code:
 - Includes appropriate tests
 - Maintains type safety
 
+## Tutorials ✨
+
+Explore the following tutorials to learn how to build applications using the Murmuration framework:
+
+- [Building a Chatbot with Murmuration and Flutter](https://agnivamaiti.github.io/murmuration/chatbot_tutorial.html)
+- [Building a Text Classifier with Murmuration and Flutter](https://agnivamaiti.github.io/murmuration/text_classifier_tutorial.html)
+
+These tutorials provide step-by-step instructions and code examples to help you get started with creating your own applications using Murmuration.
+
 ## License 📜
 
-This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
+This project is licensed under the MIT License - see the [LICENSE](https://github.com/AgnivaMaiti/murmuration/blob/main/LICENSE) file for details.
 
 ## Author ✍️
 
