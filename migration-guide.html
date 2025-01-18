@@ -1,0 +1,304 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Murmuration: Migration Guide from v1.0.0 to v2.0.0 🐦</title>
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&display=swap" rel="stylesheet">
+    <style>
+        body {
+            margin: 0;
+            font-family: 'Roboto', sans-serif;
+            background: linear-gradient(to bottom, #0175C2, #1E1E1E);
+            color: #ECEFF1;
+        }
+
+        header {
+            background: #02569B;
+            padding: 20px;
+            text-align: center;
+            box-shadow: 0px 4px 6px rgba(0, 0, 0, 0.2);
+        }
+
+        header h1 {
+            font-size: 2.5rem;
+            margin: 0;
+            color: #FFFFFF;
+        }
+
+        .content {
+            max-width: 800px;
+            margin: 20px auto;
+            padding: 20px;
+            background: #263238;
+            border-radius: 10px;
+            box-shadow: 0px 6px 10px rgba(0, 0, 0, 0.3);
+            text-align: left;
+        }
+
+        .content h2 {
+            color: #0288D1;
+            border-bottom: 2px solid #0288D1;
+            padding-bottom: 5px;
+        }
+
+        .code-block {
+            background: #37474F;
+            padding: 15px;
+            border-radius: 5px;
+            overflow-x: auto;
+        }
+
+        .code-block pre {
+            margin: 0;
+            color: #ECEFF1;
+        }
+
+        footer {
+            text-align: center;
+            padding: 10px;
+            background: #02569B;
+            margin-top: 20px;
+            color: #B3E5FC;
+        }
+    </style>
+</head>
+
+<body>
+    <header>
+        <h1>Murmuration: Migration Guide from v1.0.0 to v2.0.0 🐦</h1>
+    </header>
+
+    <div class="content">
+        <h2>Major Changes Overview</h2>
+        <ul>
+            <li>Enhanced schema validation system</li>
+            <li>Thread-safe state management</li>
+            <li>Improved error handling</li>
+            <li>New configuration options</li>
+            <li>Extended message history capabilities</li>
+            <li>Streaming response improvements</li>
+            <li>More robust progress tracking</li>
+        </ul>
+
+        <h2>Step-by-Step Migration</h2>
+
+        <h3>1. Update Dependencies</h3>
+        <p>Update your <code>pubspec.yaml</code>:</p>
+        <div class="code-block">
+            <pre>dependencies:
+  murmuration: ^2.0.0
+  google_generative_ai: ^latest_version
+  shared_preferences: ^latest_version  # New requirement
+  synchronized: ^latest_version        # New requirement</pre>
+        </div>
+
+        <h3>2. Configuration Updates</h3>
+        <h4>Before (1.0.0):</h4>
+        <div class="code-block">
+            <pre>final config = MurmurationConfig(
+  apiKey: 'your-api-key',
+  model: 'gemini-1.5-flash-latest',
+  debug: false,
+  stream: false,
+  logger: MurmurationLogger()
+);</pre>
+        </div>
+        <h4>After (2.0.0):</h4>
+        <div class="code-block">
+            <pre>final config = MurmurationConfig(
+  apiKey: 'your-api-key',
+  model: 'gemini-1.5-pro',  // Updated default model
+  debug: true,              
+  stream: false,            
+  logger: MurmurationLogger(enabled: true),
+  timeout: Duration(seconds: 30),  // New option
+  maxRetries: 3,                   // New option
+  retryDelay: Duration(seconds: 1),// New option
+  enableCache: true,               // New option
+  cacheTimeout: Duration(hours: 1) // New option
+);</pre>
+        </div>
+
+        <h3>3. Schema Validation Changes</h3>
+        <h4>Before (1.0.0):</h4>
+        <div class="code-block">
+            <pre>final schema = {
+  'type': 'object',
+  'properties': {
+    'name': {'type': 'string'},
+    'age': {'type': 'number'}
+  }
+};</pre>
+        </div>
+        <h4>After (2.0.0):</h4>
+        <div class="code-block">
+            <pre>final schema = OutputSchema(
+  fields: {
+    'name': StringSchemaField(
+      description: 'User  name',
+      minLength: 2,
+      required: true
+    ),
+    'age': IntSchemaField(
+      description: 'User  age',
+      min: 0,
+      required: true
+    )
+  },
+  strict: true
+);</pre>
+        </div>
+
+        <h3>4. State Management Updates</h3>
+        <h4>Before (1.0.0):</h4>
+        <div class="code-block">
+            <pre>agent.updateState({'key': 'value'});
+final value = agent.getState()['key'];</pre>
+        </div>
+        <h4>After (2.0.0):</h4>
+        <div class="code-block">
+            <pre>// State is now immutable
+final newState = state.copyWith({'key': 'value'});
+final value = state.get<String>('key');  // Type-safe access</pre>
+        </div>
+
+        <h3>5. Error Handling Improvements</h3>
+        <h4>Before (1.0.0):</h4>
+        <div class="code-block">
+            <pre>try {
+  final result = await agent.execute("Process data");
+} catch (e) {
+  print('Error: $e');
+}</pre>
+        </div>
+        <h4>After (2.0.0):</h4>
+        <div class="code-block">
+            <pre>try {
+  final result = await agent.execute("Process data");
+} on MurmurationException catch (e) {
+  print('Error: ${e.message}');
+  print('Original error: ${e.originalError}');
+  print('Stack trace: ${e.stackTrace}');
+}</pre>
+        </div>
+
+        <h3>6. Message History Management</h3>
+        <h4>Before (1.0.0):</h4>
+        <div class="code-block">
+            <pre>// Basic message storage
+final messages = [];
+messages.add(message);</pre>
+        </div>
+        <h4>After (2.0.0):</h4>
+        <div class="code-block">
+            <pre>final history = MessageHistory(
+  threadId: 'user-123',
+  maxMessages: 50,
+  maxTokens: 4000
+);
+
+await history.addMessage(Message(
+  role: 'user',
+  content: 'Hello!',
+  timestamp: DateTime.now()
+));
+
+await history.save();    // Persist to storage
+await history.load();    // Load from storage
+await history.clear();   // Clear history</pre>
+        </div>
+
+        <h3>7. Progress Tracking Updates</h3>
+        <h4>Before (1.0.0):</h4>
+        <div class="code-block">
+            <pre>final result = await murmur.run(
+  input: "Process this",
+  onProgress: (progress) {
+    print('Progress: ${progress.toString()}');
+  }
+);</pre>
+        </div>
+        <h4>After (2.0.0):</h4>
+        <div class="code-block">
+            <pre>final result = await murmur.runAgentChain(
+  input: "Process this",
+  agentInstructions: [/* ... */],
+  logProgress: true,
+  onProgress: (progress) {
+    print('Agent: ${progress.currentAgent}/${progress.totalAgents}');
+    print('Status: ${progress.status}');
+    print('Output: ${progress.output}');
+  }
+);</pre>
+        </div>
+
+        <h3>8. Tool Integration Changes</h3>
+        <h4>Before (1.0.0):</h4>
+        <div class="code-block">
+            <pre>final tool = Tool(
+  name: 'processor',
+  description: 'Processes data',
+  execute: (params) async => processData(params)
+);</pre>
+        </div>
+        <h4>After (2.0.0):</h4>
+        <div class="code-block">
+            <pre>final tool = Tool(
+  name: 'processor',
+  description: 'Processes data parameters: {
+    'data': StringSchemaField(
+      description: 'Input data to process',
+      required: true
+    ),
+    'format': StringSchemaField(
+      description: 'Output format',
+      enumValues: ['json', 'xml', 'text'],
+      required: true
+    )
+  },
+  execute: (params) async => processData(params)
+);</pre>
+        </div>
+
+        <h2>Breaking Changes</h2>
+        <ul>
+            <li><strong>Schema System:</strong> Complete overhaul of schema validation with new type-safe field definitions required and strict validation mode by default.</li>
+            <li><strong>State Management:</strong> State is now immutable, requiring the use of copyWith() for updates and type-safe access methods.</li>
+            <li><strong>Configuration:</strong> New required configuration options, different default values, and additional dependencies required.</li>
+            <li><strong>Error Handling:</strong> Introduction of the MurmurationException class with more detailed error information and structured error handling required.</li>
+            <li><strong>Message History:</strong> Thread-safe by default with persistence required and automatic cleanup mechanisms.</li>
+        </ul>
+
+        <h2>Performance Improvements</h2>
+        <ul>
+            <li><strong>Caching:</strong> Built-in response caching with configurable cache timeout and automatic cache cleanup.</li>
+            <li><strong>Threading:</strong> Thread-safe operations with improved concurrency handling and better resource management.</li>
+            <li><strong>Memory Management:</strong> Automatic message cleanup, token limit enforcement, and resource optimization.</li>
+        </ul>
+
+        <h2>Best Practices for Migration</h2>
+        <ol>
+            <li><strong>Incremental Migration:</strong> Update dependencies first, migrate configuration, update schema definitions, implement new error handling, update state management, add message history, and implement new tools.</li>
+            <li><strong>Testing:</strong> Test each component after migration, verify error handling, check state management, validate schema compliance, and test concurrent operations.</li>
+            <li><strong>Monitoring:</strong> Enable debug logging, monitor performance, track error rates, observe memory usage, and check response times.</li>
+        </ol>
+
+        <h2>Additional Resources</h2>
+        <ul>
+            <li><a href="docs/README.md">Full Documentation</a></li>
+            <li><a href="docs/api.md">API Reference</a></li>
+            <li><a href="examples/">Examples</a></li>
+            <li><a href="https://github.com/AgnivaMaiti/murmuration/issues">GitHub Issues</a></li>
+        </ul>
+
+        <p>For any migration issues or questions, please open an issue on GitHub or contact the maintainers.</p>
+    </div>
+
+    <footer>
+        <p>Created by <strong>Agniva Maiti</strong> © 2025.</p>
+    </footer>
+</body>
+
+</html>
