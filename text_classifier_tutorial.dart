@@ -78,7 +78,7 @@
         <ul>
             <li>Flutter SDK installed on your machine.</li>
             <li>A basic understanding of Dart and Flutter.</li>
-            <li>An API key for the Murmuration framework.</li>
+            <li>Gemini API key.</li>
         </ul>
 
         <h2>Step 1: Setting Up Your Flutter Project</h2>
