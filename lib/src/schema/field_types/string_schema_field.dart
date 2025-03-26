@@ -4,6 +4,8 @@ class StringSchemaField extends SchemaField<String> {
   final int? minLength;
   final int? maxLength;
   final String? pattern;
+  
+  @override
   final List<String>? enumValues;
 
   const StringSchemaField({
@@ -11,9 +13,10 @@ class StringSchemaField extends SchemaField<String> {
     this.minLength,
     this.maxLength,
     this.pattern,
-    this.enumValues,
+    List<String>? enumValues,
     bool required = true,
-  }) : super(
+  }) : enumValues = enumValues,
+       super(
     description: description,
     required: required,
   );

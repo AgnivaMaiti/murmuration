@@ -54,7 +54,7 @@ class Agent {
         _onProgress = onProgress;
 
   static Future<Agent> builder(dynamic model) async {
-    return _AgentBuilder(model);
+    return _AgentBuilder(model).build();
   }
 
   void addTool(Tool tool) {
@@ -71,6 +71,7 @@ class Agent {
     _functions[name] = handler;
   }
 
+  @override
   Future<AgentResult> execute(String input) async {
     if (_isDisposed) {
       throw StateException('Agent has been disposed');
@@ -164,7 +165,7 @@ class Agent {
       if (response['choices'] == null || response['choices'].isEmpty) {
         throw MurmurationException(
           'Invalid response format from model',
-          code: ErrorCode.unknownError,
+          code: ErrorCode.invalidResponse,
           errorDetails: {'response': response},
         );
       }
