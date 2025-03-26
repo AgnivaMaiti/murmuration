@@ -207,16 +207,21 @@
     <h3>Configuration</h3>
     <div class="code-block">
       <pre>final config = MurmurationConfig(
+  provider: LLMProvider.openAI,  // Choose from OpenAI, Google, or Anthropic
   apiKey: 'your-api-key',
-  model: 'gemini-1.5-pro',  // Specify the model to use
-  debug: true,              // Enable debug mode for verbose logging
-  stream: false,            // Disable streaming by default
+  model: 'gpt-4-turbo-preview',  // Model specific to the chosen provider
+  debug: true,                    // Enable debug mode for verbose logging
+  stream: false,                  // Disable streaming by default
   logger: MurmurationLogger(enabled: true),  // Enable logging
   timeout: Duration(seconds: 30),  // Set request timeout
-  maxRetries: 3,           // Number of retry attempts
+  maxRetries: 3,                 // Number of retry attempts
   retryDelay: Duration(seconds: 1),  // Delay between retries
-  enableCache: true,       // Enable response caching
-  cacheTimeout: Duration(hours: 1)  // Cache expiration time
+  enableCache: true,             // Enable response caching
+  cacheTimeout: Duration(hours: 1),  // Cache expiration time
+  rateLimit: RateLimit(          // Rate limiting configuration
+    requestsPerMinute: 60,
+    maxConcurrentRequests: 5
+  )
 );</pre>
     </div>
 
@@ -322,7 +327,12 @@ final schema = OutputSchema(
     <div class="code-block">
       <pre>final config = MurmurationConfig(
   apiKey: 'your-api-key',
-  stream: true  // Enable streaming
+  stream: true,  // Enable streaming
+  onStreamProgress: (progress) {  // Track streaming progress
+    print('Progress: ${progress.percentage}%');
+    print('Tokens received: ${progress.tokensReceived}');
+    print('Time elapsed: ${progress.timeElapsed}');
+  }
 );
 
 final agent = await murmur.createAgent({'role': 'Assistant'});
@@ -332,6 +342,10 @@ if (result.stream != null) {
   await for (final chunk in result.stream!) {
     print(chunk);  // Process each chunk as it arrives
   }
+  
+  // Access streaming statistics
+  print('Total tokens: ${result.streamStats.totalTokens}');
+  print('Stream duration: ${result.streamStats.duration}');
 }</pre>
     </div>
 
@@ -542,7 +556,7 @@ state._data['key'] = value;  // Wrong!</pre>
   </div>
 
   <footer>
-    <p>Created by <strong>Agniva Maiti</strong> © 2024.</p>
+    <p>Created by <strong>Agniva Maiti</strong> © 2025.</p>
   </footer>
 </body>
 

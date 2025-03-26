@@ -102,7 +102,7 @@ IMPORTANT: You must ALWAYS respond with ONLY a valid JSON object in this exact f
   "id": "task-[timestamp]",
   "title": "Brief task title",
   "description": "Detailed task description",
-  "dueDate": "2024-03-14T10:00:00Z",
+  "dueDate": "2025-03-14T10:00:00Z",
   "priority": "high/medium/low",
   "isCompleted": false
 }
@@ -125,7 +125,7 @@ You must respond with ONLY this (no other text):
   "id": "task-1234",
   "title": "Team Meeting",
   "description": "Schedule and organize team meeting for next week",
-  "dueDate": "2024-03-20T10:00:00Z",
+  "dueDate": "2025-03-27T10:00:00Z",
   "priority": "medium",
   "isCompleted": false
 }''',
