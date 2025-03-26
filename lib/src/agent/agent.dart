@@ -94,7 +94,8 @@ class Agent {
       _updateProgress(AgentStatus.error);
       _handleError(e, stackTrace);
       throw MurmurationException(
-        message: 'Failed to execute agent',
+        'Failed to execute agent',
+        code: ErrorCode.unknownError,
         originalError: e,
         stackTrace: stackTrace,
       );
@@ -267,6 +268,7 @@ class Agent {
       if (!result.isSuccess) {
         throw ValidationException(
           'Output validation failed: ${result.error}',
+          code: ErrorCode.validationError,
           errorDetails: {'content': content},
         );
       }
@@ -281,6 +283,7 @@ class Agent {
     } catch (e, stackTrace) {
       throw ValidationException(
         'Failed to validate output: $e',
+        code: ErrorCode.validationError,
         errorDetails: {'content': content},
         stackTrace: stackTrace,
       );

@@ -6,7 +6,8 @@ class StringSchemaField extends SchemaField<String> {
   final String? pattern;
   
   @override
-  final List<String>? enumValues;
+  List<String>? get enumValues => _enumValues;
+  final List<String>? _enumValues;
 
   const StringSchemaField({
     required String description,
@@ -15,7 +16,7 @@ class StringSchemaField extends SchemaField<String> {
     this.pattern,
     List<String>? enumValues,
     bool required = true,
-  }) : enumValues = enumValues,
+  }) : _enumValues = enumValues,
        super(
     description: description,
     required: required,
@@ -31,7 +32,7 @@ class StringSchemaField extends SchemaField<String> {
     if (minLength != null && value.length < minLength!) return false;
     if (maxLength != null && value.length > maxLength!) return false;
     if (pattern != null && !RegExp(pattern!).hasMatch(value)) return false;
-    if (enumValues != null && !enumValues!.contains(value)) return false;
+    if (_enumValues != null && !_enumValues!.contains(value)) return false;
     return true;
   }
 
