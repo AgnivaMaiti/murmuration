@@ -1,0 +1,52 @@
+title: Murmuration Documentation
+description: Documentation for the Murmuration AI agent framework
+baseurl: "/murmuration"
+url: "https://agnivamaiti.github.io"
+
+# Build settings
+markdown: kramdown
+theme: jekyll-theme-minimal
+plugins:
+  - jekyll-feed
+  - jekyll-seo-tag
+
+# Exclude from processing
+exclude:
+  - Gemfile
+  - Gemfile.lock
+  - node_modules
+  - vendor
+  - .git/
+
+# Site settings
+author: Agniva Maiti
+github_username: AgnivaMaiti
+version: 3.0.0
+
+# Navigation
+nav:
+  - title: Home
+    url: /
+  - title: Features
+    url: /#features
+  - title: Getting Started
+    url: /#getting-started
+  - title: Advanced Features
+    url: /#advanced-features
+  - title: Examples
+    url: /#examples
+  - title: Best Practices
+    url: /#best-practices
+  - title: API Reference
+    url: /#api-reference
+  - title: Contributing
+    url: /#contributing
+
+# Footer
+footer:
+  - title: GitHub
+    url: https://github.com/AgnivaMaiti/murmuration
+  - title: pub.dev
+    url: https://pub.dev/packages/murmuration
+  - title: License
+    url: /LICENSE 
