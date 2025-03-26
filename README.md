@@ -1,6 +1,6 @@
 # Murmuration 🐦✨
 
-[![Version](https://img.shields.io/badge/version-0.1.0-blue.svg)](https://pub.dev/packages/murmuration)
+[![Version](https://img.shields.io/badge/version-3.0.0-blue.svg)](https://pub.dev/packages/murmuration)
 [![License](https://img.shields.io/badge/license-MIT-green.svg)](LICENSE)
 [![Flutter](https://img.shields.io/badge/Flutter-3.0.0-blue.svg)](https://flutter.dev)
 [![Dart](https://img.shields.io/badge/Dart-3.0.0-blue.svg)](https://dart.dev)
@@ -71,7 +71,7 @@ Add this to your package's `pubspec.yaml` file:
 
 ```yaml
 dependencies:
-  murmuration: ^0.1.0
+  murmuration: ^3.0.0
 ```
 
 ### Basic Usage

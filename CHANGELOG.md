@@ -5,33 +5,40 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [0.1.0] - 2024-03-20
+## [3.0.0] - 2024-03-20
 
 ### Added
-- Initial release of Murmuration
 - Support for multiple LLM providers (OpenAI, Google, Anthropic)
-- Flexible agent chaining and tool composition
-- Built-in tool registry and management
-- Message history and state management
-- Schema validation for inputs and outputs
-- Comprehensive logging and monitoring
-- Efficient resource management
-- Secure API key handling
+- Enhanced tool system with better type safety and validation
+- Improved state management with thread safety
+- Comprehensive error handling system
+- New logging and monitoring capabilities
+- Security improvements
+- Resource management features
+- Message history management
+- Schema validation system
 
 ### Changed
-- None (initial release)
+- Completely restructured package architecture
+- Improved API design for better usability
+- Enhanced type safety throughout the package
+- Better error handling and reporting
+- More efficient resource management
 
 ### Deprecated
-- None (initial release)
+- None
 
 ### Removed
-- None (initial release)
+- None
 
 ### Fixed
-- None (initial release)
+- Various bug fixes and improvements
 
 ### Security
-- None (initial release)
+- Added secure API key handling
+- Added input sanitization
+- Added rate limiting
+- Added access control mechanisms
 
 ## [2.0.0] - 19-01-2025
 
