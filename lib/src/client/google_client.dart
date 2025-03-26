@@ -26,7 +26,8 @@ class GoogleClient {
   late final GenerativeModel _model;
 
   GoogleClient(this.config)
-      : baseUrl = config.baseUrl ?? 'https://generativelanguage.googleapis.com/v1',
+      : baseUrl =
+            config.baseUrl ?? 'https://generativelanguage.googleapis.com/v1',
         _client = http.Client(),
         _logger = config.logger {
     _initializeModel();
@@ -158,7 +159,7 @@ class GoogleClient {
       } catch (e) {
         attempts++;
         if (attempts >= config.maxRetries) rethrow;
-        
+
         final delay = config.retryDelay * pow(2, attempts - 1);
         await Future.delayed(delay);
       }
@@ -199,4 +200,4 @@ class GoogleClient {
   Future<void> dispose() async {
     _client.close();
   }
-} 
+}

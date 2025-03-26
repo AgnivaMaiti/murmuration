@@ -33,7 +33,8 @@ abstract class SchemaField<T> {
   ValidationResult<T> validateAndConvert(Object? value) {
     try {
       if (!isValidType(value) && value != null) {
-        return ValidationResult.failure('Invalid type: expected ${T.toString()}');
+        return ValidationResult.failure(
+            'Invalid type: expected ${T.toString()}');
       }
 
       final converted = convert(value);
@@ -232,7 +233,10 @@ class ListField<T> extends SchemaField<List<T>> {
       if (uniqueSet.length != value.length) {
         throw ValidationException(
           'List must contain unique items',
-          errorDetails: {'length': value.length, 'uniqueLength': uniqueSet.length},
+          errorDetails: {
+            'length': value.length,
+            'uniqueLength': uniqueSet.length
+          },
         );
       }
     }

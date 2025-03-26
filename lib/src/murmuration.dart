@@ -38,7 +38,8 @@ class Murmuration {
         case LLMProvider.openai:
           return OpenAIClient(config);
         case LLMProvider.anthropic:
-          throw ModelNotSupportedException('Anthropic provider not yet supported');
+          throw ModelNotSupportedException(
+              'Anthropic provider not yet supported');
         case LLMProvider.custom:
           throw ModelNotSupportedException('Custom provider not yet supported');
       }
@@ -200,8 +201,7 @@ class Murmuration {
     _lock.synchronized(() {
       final now = DateTime.now();
       final keysToRemove = _lastAccess.entries
-          .where((entry) =>
-              now.difference(entry.value) > config.cacheTimeout)
+          .where((entry) => now.difference(entry.value) > config.cacheTimeout)
           .map((e) => e.key)
           .toList();
 

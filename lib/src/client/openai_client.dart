@@ -37,7 +37,7 @@ class OpenAIClient {
     String? functionCall,
   }) async {
     final url = Uri.parse('$baseUrl/chat/completions');
-    
+
     // Merge default headers with model-specific headers
     final headers = {
       'Content-Type': 'application/json',
@@ -100,7 +100,7 @@ class OpenAIClient {
       } catch (e) {
         attempts++;
         if (attempts >= config.maxRetries) rethrow;
-        
+
         final delay = config.retryDelay * pow(2, attempts - 1);
         await Future.delayed(delay);
       }
@@ -121,7 +121,9 @@ class OpenAIClient {
 
   void _handleErrorResponse(int statusCode, Map<String, dynamic> errorBody) {
     final error = errorBody['error'] as Map<String, dynamic>?;
-    final message = error?['message'] as String? ?? errorBody['error'] as String? ?? 'Unknown error';
+    final message = error?['message'] as String? ??
+        errorBody['error'] as String? ??
+        'Unknown error';
     final type = error?['type'] as String?;
 
     switch (statusCode) {
@@ -259,4 +261,4 @@ class OpenAIClient {
   Future<void> dispose() async {
     _client.close();
   }
-} 
+}

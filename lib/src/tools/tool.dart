@@ -98,7 +98,9 @@ class Tool {
           continue;
         }
 
-        if (pattern != null && value is String && !RegExp(pattern).hasMatch(value)) {
+        if (pattern != null &&
+            value is String &&
+            !RegExp(pattern).hasMatch(value)) {
           invalidParams[paramName] = 'Value does not match pattern: $pattern';
           continue;
         }

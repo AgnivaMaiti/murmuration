@@ -1,10 +1,4 @@
-enum AgentStatus {
-  initializing,
-  processing,
-  postProcessing,
-  completed,
-  error
-}
+enum AgentStatus { initializing, processing, postProcessing, completed, error }
 
 class AgentProgress {
   final AgentStatus status;

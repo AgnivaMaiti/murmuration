@@ -1,0 +1,24 @@
+# Generated files
+pubspec.lock
+.dart_tool/
+.packages
+build/
+*.g.dart
+
+# IDE files
+.idea/
+.vscode/
+*.iml
+
+# Test files
+test/
+coverage/
+
+# Documentation
+docs/
+doc/
+
+# Temporary files
+*.log
+*.tmp
+.DS_Store 

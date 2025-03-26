@@ -37,6 +37,7 @@ class AgentChain {
     return _ChainBuilder();
   }
 
+  @override
   Future<ChainResult> execute(String input) async {
     if (_isDisposed) {
       throw StateException('Chain has been disposed');
@@ -53,7 +54,7 @@ class AgentChain {
     try {
       for (var i = 0; i < _agents.length; i++) {
         final agent = _agents[i];
-        
+
         _updateProgress(AgentProgress(
           status: AgentStatus.initializing,
           currentAgent: i + 1,
@@ -74,10 +75,9 @@ class AgentChain {
             timestamp: DateTime.now(),
             metadata: {'output': result.output},
           ));
-
         } catch (e, stackTrace) {
           _handleError(e, stackTrace, i + 1);
-          
+
           _updateProgress(AgentProgress(
             status: AgentStatus.error,
             currentAgent: i + 1,
@@ -193,7 +193,8 @@ class _ChainBuilder {
 
     if (_history == null) {
       _history = MessageHistory(
-        threadId: _config!.threadId ?? DateTime.now().millisecondsSinceEpoch.toString(),
+        threadId: _config!.threadId ??
+            DateTime.now().millisecondsSinceEpoch.toString(),
         maxMessages: _config!.maxMessages,
         maxTokens: _config!.maxTokens,
       );
@@ -207,4 +208,4 @@ class _ChainBuilder {
       progressController: _progressController,
     );
   }
-} 
+}

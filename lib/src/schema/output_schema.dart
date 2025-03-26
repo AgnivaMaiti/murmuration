@@ -59,7 +59,8 @@ class OutputSchema {
   ValidationResult _validateField(SchemaField field, dynamic value) {
     try {
       if (!field.isValidType(value) && value != null) {
-        return ValidationResult.failure('Invalid type: expected ${field.runtimeType}');
+        return ValidationResult.failure(
+            'Invalid type: expected ${field.runtimeType}');
       }
 
       final converted = field.convert(value);
@@ -80,7 +81,8 @@ class OutputSchema {
     }
 
     if (_validatingFields.contains(fieldName)) {
-      return ValidationResult.failure('Circular reference detected for field: $fieldName');
+      return ValidationResult.failure(
+          'Circular reference detected for field: $fieldName');
     }
 
     _validatingFields.add(fieldName);

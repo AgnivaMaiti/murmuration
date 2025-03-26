@@ -1,13 +1,7 @@
 import 'dart:convert';
 import '../exceptions.dart';
 
-enum MessageRole {
-  system,
-  user,
-  assistant,
-  function,
-  tool
-}
+enum MessageRole { system, user, assistant, function, tool }
 
 class Message {
   final MessageRole role;

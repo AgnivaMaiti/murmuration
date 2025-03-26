@@ -4,7 +4,8 @@ import 'package:shared_preferences/shared_preferences.dart'; // Importing shared
 import 'dart:convert'; // Importing dart:convert for JSON encoding/decoding
 
 void main() {
-  runApp(const MyApp()); // Entry point of the application, runs the MyApp widget
+  runApp(
+      const MyApp()); // Entry point of the application, runs the MyApp widget
 }
 
 class MyApp extends StatelessWidget {
@@ -65,7 +66,9 @@ class _ChatScreenState extends State<ChatScreen> {
   // Method to initialize the chatbot agent
   Future<void> _initializeMurmuration() async {
     final config = MurmurationConfig(
-      provider: _selectedProvider == 'google' ? LLMProvider.google : LLMProvider.openai,
+      provider: _selectedProvider == 'google'
+          ? LLMProvider.google
+          : LLMProvider.openai,
       apiKey: 'your-secure-api-key',
       model: _selectedProvider == 'google' ? 'gemini-pro' : 'gpt-3.5-turbo',
     );
@@ -134,7 +137,7 @@ class _ChatScreenState extends State<ChatScreen> {
       });
 
       final result = await agent.execute(userMessage.content);
-      
+
       if (result.stream != null) {
         String assistantResponse = '';
         await for (final chunk in result.stream!) {
@@ -142,18 +145,22 @@ class _ChatScreenState extends State<ChatScreen> {
           if (mounted) {
             setState(() {
               if (_messages.last.role == 'assistant') {
-                _messages.last = Message(role: 'assistant', content: assistantResponse);
+                _messages.last =
+                    Message(role: 'assistant', content: assistantResponse);
               } else {
-                _messages.add(Message(role: 'assistant', content: assistantResponse));
+                _messages.add(
+                    Message(role: 'assistant', content: assistantResponse));
               }
             });
           }
         }
-        await _saveMessage(Message(role: 'assistant', content: assistantResponse));
+        await _saveMessage(
+            Message(role: 'assistant', content: assistantResponse));
       } else {
         final assistantMessage = Message(
             role: 'assistant',
-            content: result.output.trim()); // Creating an assistant message from the response
+            content: result.output
+                .trim()); // Creating an assistant message from the response
 
         if (mounted) {
           setState(() => _messages.add(assistantMessage));
@@ -329,7 +336,8 @@ class Message {
   final String role; // Role of the message sender (user or assistant)
   final String content; // Content of the message
 
-  const Message({required this.role, required this.content}); // Constructor for Message
+  const Message(
+      {required this.role, required this.content}); // Constructor for Message
 
   // Method to convert Message to JSON string
   String toJson() => jsonEncode({

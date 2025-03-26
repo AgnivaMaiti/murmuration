@@ -95,7 +95,8 @@ class TaskManager {
 
   Future<Task> createTask(String description) async {
     final agent = await _murmuration.createAgent({
-      'role': '''You are an AI Task Management Assistant that creates tasks from user descriptions.
+      'role':
+          '''You are an AI Task Management Assistant that creates tasks from user descriptions.
 
 IMPORTANT: You must ALWAYS respond with ONLY a valid JSON object in this exact format:
 {
@@ -215,7 +216,9 @@ class _TaskManagerScreenState extends State<TaskManagerScreen> {
     try {
       final prefs = await SharedPreferences.getInstance();
       final config = MurmurationConfig(
-        provider: _selectedProvider == 'google' ? LLMProvider.google : LLMProvider.openai,
+        provider: _selectedProvider == 'google'
+            ? LLMProvider.google
+            : LLMProvider.openai,
         apiKey: 'your-secure-api-key',
         model: _selectedProvider == 'google' ? 'gemini-pro' : 'gpt-3.5-turbo',
         debug: true,
@@ -335,7 +338,8 @@ class _TaskManagerScreenState extends State<TaskManagerScreen> {
               itemBuilder: (context, index) {
                 final task = _tasks[index];
                 return Card(
-                  margin: const EdgeInsets.symmetric(horizontal: 8.0, vertical: 4.0),
+                  margin: const EdgeInsets.symmetric(
+                      horizontal: 8.0, vertical: 4.0),
                   child: ListTile(
                     title: Text(task.title),
                     subtitle: Text(task.description),

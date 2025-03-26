@@ -1,12 +1,7 @@
 import '../logging/logger.dart';
 import '../exceptions.dart';
 
-enum LLMProvider {
-  google,
-  openai,
-  anthropic,
-  custom
-}
+enum LLMProvider { google, openai, anthropic, custom }
 
 class ModelConfig {
   final String modelName;
@@ -130,7 +125,8 @@ class MurmurationConfig {
     this.provider = LLMProvider.openai,
     this.baseUrl,
     this.providerOptions,
-  })  : modelConfig = modelConfig ?? const ModelConfig(modelName: 'gpt-3.5-turbo'),
+  })  : modelConfig =
+            modelConfig ?? const ModelConfig(modelName: 'gpt-3.5-turbo'),
         logger = logger ?? const MurmurationLogger() {
     _validateConfig();
   }
@@ -294,7 +290,8 @@ class MurmurationConfig {
   factory MurmurationConfig.fromJson(Map<String, dynamic> json) {
     return MurmurationConfig(
       apiKey: json['apiKey'] as String,
-      modelConfig: ModelConfig.fromJson(json['modelConfig'] as Map<String, dynamic>),
+      modelConfig:
+          ModelConfig.fromJson(json['modelConfig'] as Map<String, dynamic>),
       debug: json['debug'] as bool? ?? false,
       stream: json['stream'] as bool? ?? false,
       maxMessages: json['maxMessages'] as int? ?? 50,
@@ -304,7 +301,8 @@ class MurmurationConfig {
       maxRetries: json['maxRetries'] as int? ?? 3,
       retryDelay: Duration(milliseconds: json['retryDelay'] as int? ?? 1000),
       enableCache: json['enableCache'] as bool? ?? true,
-      cacheTimeout: Duration(milliseconds: json['cacheTimeout'] as int? ?? 3600000),
+      cacheTimeout:
+          Duration(milliseconds: json['cacheTimeout'] as int? ?? 3600000),
       provider: LLMProvider.values.firstWhere(
         (e) => e.name == json['provider'],
         orElse: () => LLMProvider.openai,

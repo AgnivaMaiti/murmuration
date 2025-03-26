@@ -30,7 +30,8 @@ class ToolChain {
 
   Future<String> execute(Map<String, dynamic> args) async {
     if (tools.isEmpty) {
-      throw InvalidConfigurationException('Tool chain must have at least one tool');
+      throw InvalidConfigurationException(
+          'Tool chain must have at least one tool');
     }
 
     String currentOutput = '';
@@ -79,7 +80,6 @@ class ToolChain {
               'duration': DateTime.now().difference(toolStartTime),
             },
           );
-
         } catch (e, stackTrace) {
           _logger.error(
             'Tool execution failed',
@@ -121,7 +121,6 @@ class ToolChain {
       );
 
       return currentOutput;
-
     } catch (e, stackTrace) {
       if (e is MurmurationException) rethrow;
       throw MurmurationException(
@@ -144,7 +143,7 @@ class ToolChain {
     String previousOutput,
   ) {
     final toolArgs = Map<String, dynamic>.from(chainArgs);
-    
+
     // Add previous output if tool accepts it
     if (tool.parameters.containsKey('input')) {
       toolArgs['input'] = previousOutput;
@@ -198,4 +197,4 @@ class ToolChain {
   String toString() {
     return 'ToolChain(name: $name, tools: ${tools.length})';
   }
-} 
+}

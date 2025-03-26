@@ -92,7 +92,11 @@ class Agent {
     } catch (e, stackTrace) {
       _updateProgress(AgentStatus.error);
       _handleError(e, stackTrace);
-      rethrow;
+      throw MurmurationException(
+        message: 'Failed to execute agent',
+        originalError: e,
+        stackTrace: stackTrace,
+      );
     }
   }
 
@@ -117,7 +121,7 @@ class Agent {
 
   Future<List<Message>> _prepareMessages(String input) async {
     final messages = <Message>[];
-    
+
     // Add system message if available
     final systemMessage = _state.get<String>('systemMessage');
     if (systemMessage != null) {
@@ -183,8 +187,11 @@ class Agent {
       for (final entry in _functions.entries)
         entry.key: {
           'name': entry.key,
-          'description': _state.get<String>('function_${entry.key}_description') ?? '',
-          'parameters': _state.get<Map<String, dynamic>>('function_${entry.key}_parameters') ?? {},
+          'description':
+              _state.get<String>('function_${entry.key}_description') ?? '',
+          'parameters': _state.get<Map<String, dynamic>>(
+                  'function_${entry.key}_parameters') ??
+              {},
         }
     };
   }
@@ -218,7 +225,8 @@ class Agent {
     );
   }
 
-  Future<AgentResult> _handleFunctionCall(Map<String, dynamic> functionCall) async {
+  Future<AgentResult> _handleFunctionCall(
+      Map<String, dynamic> functionCall) async {
     final name = functionCall['name'] as String;
     final parameters = functionCall['arguments'] as Map<String, dynamic>;
     final handler = _functions[name];
@@ -380,7 +388,8 @@ class _AgentBuilder {
 
     if (_history == null) {
       _history = MessageHistory(
-        threadId: _config!.threadId ?? DateTime.now().millisecondsSinceEpoch.toString(),
+        threadId: _config!.threadId ??
+            DateTime.now().millisecondsSinceEpoch.toString(),
         maxMessages: _config!.maxMessages,
         maxTokens: _config!.maxTokens,
       );

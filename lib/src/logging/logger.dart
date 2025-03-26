@@ -36,20 +36,21 @@ class LogEntry {
 
   String toFormattedString() {
     final buffer = StringBuffer();
-    buffer.write('${timestamp.toIso8601String()} [${level.name.toUpperCase()}] $message');
-    
+    buffer.write(
+        '${timestamp.toIso8601String()} [${level.name.toUpperCase()}] $message');
+
     if (context != null) {
       buffer.write('\nContext: ${context.toString()}');
     }
-    
+
     if (error != null) {
       buffer.write('\nError: $error');
     }
-    
+
     if (stackTrace != null) {
       buffer.write('\nStack trace:\n$stackTrace');
     }
-    
+
     return buffer.toString();
   }
 }
@@ -162,7 +163,8 @@ class MurmurationLogger {
     }
   }
 
-  void log(String message, {
+  void log(
+    String message, {
     LogLevel level = LogLevel.info,
     dynamic error,
     StackTrace? stackTrace,
@@ -199,8 +201,10 @@ class MurmurationLogger {
     log(message, level: LogLevel.warning, context: context);
   }
 
-  void error(String message, [dynamic error, StackTrace? stackTrace, Map<String, dynamic>? context]) {
-    log(message, 
+  void error(String message,
+      [dynamic error, StackTrace? stackTrace, Map<String, dynamic>? context]) {
+    log(
+      message,
       level: LogLevel.error,
       error: error,
       stackTrace: stackTrace,
@@ -208,8 +212,10 @@ class MurmurationLogger {
     );
   }
 
-  void critical(String message, [dynamic error, StackTrace? stackTrace, Map<String, dynamic>? context]) {
-    log(message,
+  void critical(String message,
+      [dynamic error, StackTrace? stackTrace, Map<String, dynamic>? context]) {
+    log(
+      message,
       level: LogLevel.critical,
       error: error,
       stackTrace: stackTrace,
