@@ -1,6 +1,6 @@
 name: murmuration
 description: A powerful and flexible AI agent framework for building intelligent applications with support for multiple LLM providers and tool chaining.
-version: 0.1.0
+version: 3.0.0
 homepage: https://github.com/yourusername/murmuration
 
 environment:
