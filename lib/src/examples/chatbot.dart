@@ -4,10 +4,12 @@ import 'package:shared_preferences/shared_preferences.dart'; // Importing shared
 import 'dart:convert'; // Importing dart:convert for JSON encoding/decoding
 
 void main() {
-  runApp(MyApp()); // Entry point of the application, runs the MyApp widget
+  runApp(const MyApp()); // Entry point of the application, runs the MyApp widget
 }
 
 class MyApp extends StatelessWidget {
+  const MyApp({super.key});
+
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
@@ -17,12 +19,14 @@ class MyApp extends StatelessWidget {
         visualDensity:
             VisualDensity.adaptivePlatformDensity, // Adaptive visual density
       ),
-      home: ChatScreen(), // Setting the home screen to ChatScreen
+      home: const ChatScreen(), // Setting the home screen to ChatScreen
     );
   }
 }
 
 class ChatScreen extends StatefulWidget {
+  const ChatScreen({super.key});
+
   @override
   _ChatScreenState createState() =>
       _ChatScreenState(); // Creating the state for ChatScreen
@@ -32,104 +36,192 @@ class _ChatScreenState extends State<ChatScreen> {
   final TextEditingController _controller =
       TextEditingController(); // Controller for the text input field
   final List<Message> _messages = []; // List to hold chat messages
-  late Agent _agent; // Agent for handling chatbot interactions
+  Murmuration? _murmuration; // Agent for handling chatbot interactions
   String _selectedLanguage = 'en'; // Default selected language
+  String _selectedProvider = 'google'; // Default provider
+  bool _isInitialized = false;
+  String? _error;
 
   @override
   void initState() {
     super.initState(); // Calling the superclass's initState
-    _initializeAgent(); // Initializing the chatbot agent
-    _loadMessages(); // Loading saved messages from local storage
+    _initializeApp(); // Initializing the chatbot agent
+  }
+
+  Future<void> _initializeApp() async {
+    try {
+      await _initializeMurmuration();
+      await _loadMessages();
+      if (mounted) {
+        setState(() => _isInitialized = true);
+      }
+    } catch (e) {
+      if (mounted) {
+        setState(() => _error = 'Failed to initialize: $e');
+      }
+    }
   }
 
   // Method to initialize the chatbot agent
-  Future<void> _initializeAgent() async {
+  Future<void> _initializeMurmuration() async {
     final config = MurmurationConfig(
-        apiKey: 'add-your-api-key'); // Configuration for the agent
-    _agent = await Murmuration(config).createAgent({
-      // Creating the agent with specified role and language
-      'role': 'Assistant',
-      'language': _selectedLanguage,
-    });
+      provider: _selectedProvider == 'google' ? LLMProvider.google : LLMProvider.openai,
+      apiKey: 'your-secure-api-key',
+      model: _selectedProvider == 'google' ? 'gemini-pro' : 'gpt-3.5-turbo',
+    );
+
+    _murmuration = Murmuration(config);
   }
 
   // Method to load saved messages from shared preferences
   Future<void> _loadMessages() async {
-    final prefs = await SharedPreferences
-        .getInstance(); // Getting instance of shared preferences
-    final savedMessages = prefs.getStringList('chat_history') ??
-        []; // Retrieving saved messages or an empty list
-    setState(() {
-      _messages.addAll(savedMessages
-          .map((msg) => Message.fromJson(msg))
-          .toList()); // Adding loaded messages to the state
-    });
+    try {
+      final prefs = await SharedPreferences
+          .getInstance(); // Getting instance of shared preferences
+      final savedMessages = prefs.getStringList('chat_history') ??
+          []; // Retrieving saved messages or an empty list
+      if (mounted) {
+        setState(() {
+          _messages.addAll(savedMessages
+              .map((msg) => Message.fromJson(msg))
+              .toList()); // Adding loaded messages to the state
+        });
+      }
+    } catch (e) {
+      if (mounted) {
+        setState(() => _error = 'Failed to load messages: $e');
+      }
+    }
   }
 
   // Method to save a message to shared preferences
   Future<void> _saveMessage(Message message) async {
-    final prefs = await SharedPreferences
-        .getInstance(); // Getting instance of shared preferences
-    final savedMessages = prefs.getStringList('chat_history') ??
-        []; // Retrieving saved messages or an empty list
-    savedMessages.add(message.toJson()); // Adding the new message to the list
-    await prefs.setStringList('chat_history',
-        savedMessages); // Saving the updated list back to shared preferences
+    try {
+      final prefs = await SharedPreferences
+          .getInstance(); // Getting instance of shared preferences
+      final savedMessages = prefs.getStringList('chat_history') ??
+          []; // Retrieving saved messages or an empty list
+      savedMessages.add(message.toJson()); // Adding the new message to the list
+      await prefs.setStringList('chat_history',
+          savedMessages); // Saving the updated list back to shared preferences
+    } catch (e) {
+      if (mounted) {
+        setState(() => _error = 'Failed to save message: $e');
+      }
+    }
   }
 
   // Method to send a message
   Future<void> _sendMessage() async {
-    if (_controller.text.isEmpty) return; // Return if the input is empty
+    if (_controller.text.isEmpty || _murmuration == null) return;
 
     final userMessage = Message(
-        role: 'user', content: _controller.text); // Creating a user message
+        role: 'user',
+        content: _controller.text.trim()); // Creating a user message
+
     setState(() {
       _messages.add(userMessage); // Adding user message to the list
+      _error = null;
     });
     _controller.clear(); // Clearing the input field
 
-    await _saveMessage(userMessage); // Saving the user message
+    try {
+      await _saveMessage(userMessage); // Saving the user message
 
-    final result = await _agent.call(userMessage
-        .content); // Sending the message to the agent and getting a response
-    final assistantMessage = Message(
-        role: 'assistant',
-        content:
-            result.output); // Creating an assistant message from the response
+      final agent = await _murmuration!.createAgent({
+        'role': 'Assistant',
+        'language': _selectedLanguage,
+      });
 
-    setState(() {
-      _messages.add(assistantMessage); // Adding assistant message to the list
-    });
-    await _saveMessage(assistantMessage); // Saving the assistant message
+      final result = await agent.execute(userMessage.content);
+      
+      if (result.stream != null) {
+        String assistantResponse = '';
+        await for (final chunk in result.stream!) {
+          assistantResponse += chunk;
+          if (mounted) {
+            setState(() {
+              if (_messages.last.role == 'assistant') {
+                _messages.last = Message(role: 'assistant', content: assistantResponse);
+              } else {
+                _messages.add(Message(role: 'assistant', content: assistantResponse));
+              }
+            });
+          }
+        }
+        await _saveMessage(Message(role: 'assistant', content: assistantResponse));
+      } else {
+        final assistantMessage = Message(
+            role: 'assistant',
+            content: result.output.trim()); // Creating an assistant message from the response
+
+        if (mounted) {
+          setState(() => _messages.add(assistantMessage));
+        }
+        await _saveMessage(assistantMessage); // Saving the assistant message
+      }
+    } catch (e) {
+      if (mounted) {
+        setState(() => _error = 'Error: $e');
+      }
+    }
   }
 
   @override
   Widget build(BuildContext context) {
+    if (!_isInitialized) {
+      return const Scaffold(
+        body: Center(child: CircularProgressIndicator()),
+      );
+    }
+
     return Scaffold(
       appBar: AppBar(
         title: Text('Murmuration Chatbot'), // Title of the app bar
         actions: [
+          // Provider selection dropdown
           DropdownButton<String>(
-            value: _selectedLanguage, // Current selected language
-            items:
-                <String>['en', 'es', 'fr', 'de'] // List of available languages
-                    .map<DropdownMenuItem<String>>((String value) {
-              return DropdownMenuItem<String>(
-                value: value, // Setting the value of the dropdown item
-                child: Text(value), // Displaying the language
-              );
-            }).toList(),
+            value: _selectedProvider,
+            items: const [
+              DropdownMenuItem(value: 'google', child: Text('Google')),
+              DropdownMenuItem(value: 'openai', child: Text('OpenAI')),
+            ],
+            onChanged: (String? newValue) async {
+              if (newValue != null) {
+                setState(() => _selectedProvider = newValue);
+                await _initializeMurmuration();
+              }
+            },
+          ),
+          const SizedBox(width: 16),
+          // Language selection dropdown
+          DropdownButton<String>(
+            value: _selectedLanguage,
+            items: const [
+              DropdownMenuItem(value: 'en', child: Text('English')),
+              DropdownMenuItem(value: 'es', child: Text('Spanish')),
+              DropdownMenuItem(value: 'fr', child: Text('French')),
+              DropdownMenuItem(value: 'de', child: Text('German')),
+            ],
             onChanged: (String? newValue) {
-              setState(() {
-                _selectedLanguage = newValue!; // Updating the selected language
-                _initializeAgent(); // Reinitialize agent with new language
-              });
+              if (newValue != null) {
+                setState(() => _selectedLanguage = newValue);
+              }
             },
           ),
         ],
       ),
       body: Column(
         children: [
+          if (_error != null)
+            Container(
+              color: Colors.red[100],
+              padding: const EdgeInsets.all(8.0),
+              child: Text(
+                _error!,
+                style: const TextStyle(color: Colors.red),
+              ),
+            ),
           Expanded(
             child: ListView.builder(
               padding: const EdgeInsets.all(8.0), // Padding for the list view
@@ -223,6 +315,13 @@ class _ChatScreenState extends State<ChatScreen> {
       ),
     );
   }
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    _murmuration?.dispose();
+    super.dispose();
+  }
 }
 
 // Message class to represent a chat message
@@ -230,19 +329,20 @@ class Message {
   final String role; // Role of the message sender (user or assistant)
   final String content; // Content of the message
 
-  Message(
-      {required this.role, required this.content}); // Constructor for Message
+  const Message({required this.role, required this.content}); // Constructor for Message
 
   // Method to convert Message to JSON string
-  String toJson() {
-    return '{"role": "$role", "content": "$content"}'; // JSON representation of the message
-  }
+  String toJson() => jsonEncode({
+        'role': role,
+        'content': content,
+      });
 
   // Static method to create a Message from a JSON string
   static Message fromJson(String json) {
-    final data = jsonDecode(json); // Decoding the JSON string
+    final data = jsonDecode(json);
     return Message(
-        role: data['role'],
-        content: data['content']); // Creating a Message object
+      role: data['role'],
+      content: data['content'],
+    );
   }
 }

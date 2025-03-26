@@ -1,0 +1,2 @@
+C:/Users/KIIT/Documents/GitHub/murmuration/android/app/.cxx/Debug/6h6z1g47/armeabi-v7a/CMakeFiles/edit_cache.dir
+C:/Users/KIIT/Documents/GitHub/murmuration/android/app/.cxx/Debug/6h6z1g47/armeabi-v7a/CMakeFiles/rebuild_cache.dir

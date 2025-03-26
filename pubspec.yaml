@@ -1,24 +1,31 @@
 name: murmuration
-description: "A framework for multi-agent orchestration in Dart (Flutter)."
-version: 2.0.0
-homepage: https://github.com/AgnivaMaiti/murmuration
+description: A powerful and flexible AI agent framework for building intelligent applications with support for multiple LLM providers and tool chaining.
+version: 0.1.0
+homepage: https://github.com/yourusername/murmuration
 
 environment:
-  sdk: ">=3.0.0 <4.0.0"
+  sdk: '>=3.0.0 <4.0.0'
   flutter: ">=3.0.0"
 
 dependencies:
   flutter:
     sdk: flutter
-
-  google_generative_ai: ^0.1.0
+  google_generative_ai: ^0.2.0
+  http: ^1.1.0
   shared_preferences: ^2.2.0
   synchronized: ^3.1.0
+  path_provider: ^2.1.0
+  intl: ^0.18.0
+  json_annotation: ^4.8.1
 
 dev_dependencies:
   flutter_test:
     sdk: flutter
   flutter_lints: ^2.0.0
+  test: ^1.24.0
+  build_runner: ^2.4.6
+  json_serializable: ^6.7.1
+  mockito: ^5.4.2
 
 flutter:
   uses-material-design: true

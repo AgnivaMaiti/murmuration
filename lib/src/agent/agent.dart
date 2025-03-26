@@ -12,471 +12,391 @@ import '../logging/logger.dart';
 import '../messaging/message_history.dart';
 import '../state/immutable_state.dart';
 import 'agent_result.dart';
+import '../client/openai_client.dart';
+
+typedef FunctionHandler = Future<String> Function(Map<String, dynamic>);
 
 class Agent {
-  final GenerativeModel _model;
+  final dynamic _model;
+  final MurmurationConfig _config;
   final ImmutableState _state;
+  final MurmurationLogger _logger;
+  final MessageHistory _history;
   final List<Tool> _tools;
   final Map<String, FunctionHandler> _functions;
-  final MurmurationLogger _logger;
-  final MurmurationConfig _config;
-  final StreamController<AgentProgress>? _progressController;
-  final int _currentAgentIndex;
+  final OutputSchema? _outputSchema;
+  final int _currentIndex;
   final int _totalAgents;
   final ProgressCallback? _onProgress;
-  final OutputSchema? _outputSchema;
-  MessageHistory? _messageHistory;
+  bool _isDisposed = false;
 
-  Agent._({
-    required GenerativeModel model,
+  Agent._internal({
+    required dynamic model,
+    required MurmurationConfig config,
     required ImmutableState state,
+    required MessageHistory history,
     required List<Tool> tools,
     required Map<String, FunctionHandler> functions,
-    required MurmurationLogger logger,
-    required MurmurationConfig config,
-    StreamController<AgentProgress>? progressController,
-    required int currentAgentIndex,
+    required OutputSchema? outputSchema,
+    required int currentIndex,
     required int totalAgents,
-    ProgressCallback? onProgress,
-    OutputSchema? outputSchema,
-    MessageHistory? messageHistory,
+    required ProgressCallback? onProgress,
   })  : _model = model,
+        _config = config,
         _state = state,
+        _logger = config.logger,
+        _history = history,
         _tools = tools,
         _functions = functions,
-        _logger = logger,
-        _config = config,
-        _progressController = progressController,
-        _currentAgentIndex = currentAgentIndex,
-        _totalAgents = totalAgents,
-        _onProgress = onProgress,
         _outputSchema = outputSchema,
-        _messageHistory = messageHistory;
+        _currentIndex = currentIndex,
+        _totalAgents = totalAgents,
+        _onProgress = onProgress;
 
-  static AgentBuilder builder(GenerativeModel model) => AgentBuilder(model);
+  static Future<Agent> builder(dynamic model) async {
+    return _AgentBuilder(model);
+  }
 
   void addTool(Tool tool) {
-    (_tools).add(tool);
-    _logger.log('Added tool: ${tool.name}');
+    if (_isDisposed) {
+      throw StateException('Agent has been disposed');
+    }
+    _tools.add(tool);
   }
 
   void addFunction(String name, FunctionHandler handler) {
-    (_functions)[name] = handler;
-    _logger.log('Added function: $name');
+    if (_isDisposed) {
+      throw StateException('Agent has been disposed');
+    }
+    _functions[name] = handler;
   }
 
-  Future<void> handoff(Agent nextAgent) async {
-    nextAgent.updateState(_state.toMap());
-    _logger.log('State handed off to next agent');
+  Future<AgentResult> execute(String input) async {
+    if (_isDisposed) {
+      throw StateException('Agent has been disposed');
+    }
+
+    try {
+      _updateProgress(AgentStatus.initializing);
+      await _validateInput(input);
+
+      _updateProgress(AgentStatus.processing);
+      final messages = await _prepareMessages(input);
+      final response = await _getModelResponse(messages);
+
+      _updateProgress(AgentStatus.postProcessing);
+      final result = await _processResponse(response);
+
+      _updateProgress(AgentStatus.completed);
+      return result;
+    } catch (e, stackTrace) {
+      _updateProgress(AgentStatus.error);
+      _handleError(e, stackTrace);
+      rethrow;
+    }
   }
 
-  void updateState(Map<String, dynamic> newState) {
-    (_state).copyWith(newState);
-    _logger.log('State updated: ${_state.toMap()}');
+  Future<void> _validateInput(String input) async {
+    if (input.isEmpty) {
+      throw ValidationException(
+        'Input cannot be empty',
+        errorDetails: {'input': input},
+      );
+    }
+
+    if (input.length > _config.maxTokens) {
+      throw TokenLimitException(
+        'Input exceeds maximum token limit',
+        errorDetails: {
+          'inputLength': input.length,
+          'maxTokens': _config.maxTokens,
+        },
+      );
+    }
   }
 
-  Future<void> initializeHistory(String threadId) async {
-    _messageHistory = MessageHistory(threadId: threadId);
-    await _messageHistory!.load();
-    _logger.log('Initialized message history for thread: $threadId');
+  Future<List<Message>> _prepareMessages(String input) async {
+    final messages = <Message>[];
+    
+    // Add system message if available
+    final systemMessage = _state.get<String>('systemMessage');
+    if (systemMessage != null) {
+      messages.add(Message(
+        role: MessageRole.system,
+        content: systemMessage,
+      ));
+    }
+
+    // Add context from state if available
+    final context = _state.get<Map<String, dynamic>>('context');
+    if (context != null) {
+      messages.add(Message(
+        role: MessageRole.system,
+        content: 'Context: ${jsonEncode(context)}',
+      ));
+    }
+
+    // Add history messages
+    messages.addAll(_history.messages);
+
+    // Add current input
+    messages.add(Message(
+      role: MessageRole.user,
+      content: input,
+    ));
+
+    return messages;
   }
 
-  Future<AgentResult> call(String input) => execute(input);
+  Future<Map<String, dynamic>> _getModelResponse(List<Message> messages) async {
+    try {
+      final response = await _model.chatCompletion(
+        messages: messages,
+        stream: _config.stream,
+        functions: _prepareFunctions(),
+        functionCall: _determineFunctionCall(),
+      );
+
+      if (response['choices'] == null || response['choices'].isEmpty) {
+        throw MurmurationException(
+          'Invalid response format from model',
+          code: ErrorCode.unknownError,
+          errorDetails: {'response': response},
+        );
+      }
+
+      return response;
+    } catch (e, stackTrace) {
+      throw MurmurationException(
+        'Failed to get model response: $e',
+        code: ErrorCode.unknownError,
+        originalError: e,
+        stackTrace: stackTrace,
+      );
+    }
+  }
+
+  Map<String, dynamic>? _prepareFunctions() {
+    if (_functions.isEmpty) return null;
+
+    return {
+      for (final entry in _functions.entries)
+        entry.key: {
+          'name': entry.key,
+          'description': _state.get<String>('function_${entry.key}_description') ?? '',
+          'parameters': _state.get<Map<String, dynamic>>('function_${entry.key}_parameters') ?? {},
+        }
+    };
+  }
+
+  String? _determineFunctionCall() {
+    if (_functions.isEmpty) return null;
+    return _state.get<String>('function_call') ?? 'auto';
+  }
+
+  Future<AgentResult> _processResponse(Map<String, dynamic> response) async {
+    final choice = response['choices'][0];
+    final message = choice['message'];
+    final functionCall = message['function_call'];
+
+    if (functionCall != null) {
+      return await _handleFunctionCall(functionCall);
+    }
+
+    final content = message['content'] as String;
+    if (_outputSchema != null) {
+      return await _validateAndFormatOutput(content);
+    }
+
+    return AgentResult(
+      output: content,
+      metadata: {
+        'model': _config.modelConfig.modelName,
+        'usage': response['usage'],
+        'finish_reason': choice['finish_reason'],
+      },
+    );
+  }
+
+  Future<AgentResult> _handleFunctionCall(Map<String, dynamic> functionCall) async {
+    final name = functionCall['name'] as String;
+    final parameters = functionCall['arguments'] as Map<String, dynamic>;
+    final handler = _functions[name];
+
+    if (handler == null) {
+      throw MurmurationException(
+        'Unknown function: $name',
+        code: ErrorCode.unknownError,
+        errorDetails: {'function': name},
+      );
+    }
+
+    try {
+      final result = await handler(parameters);
+      return AgentResult(
+        output: result,
+        metadata: {
+          'function': name,
+          'parameters': parameters,
+        },
+      );
+    } catch (e, stackTrace) {
+      throw MurmurationException(
+        'Failed to execute function $name: $e',
+        code: ErrorCode.unknownError,
+        originalError: e,
+        stackTrace: stackTrace,
+      );
+    }
+  }
+
+  Future<AgentResult> _validateAndFormatOutput(String content) async {
+    try {
+      final data = jsonDecode(content);
+      final result = _outputSchema!.validateAndConvert(data);
+
+      if (!result.isSuccess) {
+        throw ValidationException(
+          'Output validation failed: ${result.error}',
+          errorDetails: {'content': content},
+        );
+      }
+
+      return AgentResult(
+        output: jsonEncode(result.value),
+        metadata: {
+          'model': _config.modelConfig.modelName,
+          'schema': _outputSchema.toString(),
+        },
+      );
+    } catch (e, stackTrace) {
+      throw ValidationException(
+        'Failed to validate output: $e',
+        errorDetails: {'content': content},
+        stackTrace: stackTrace,
+      );
+    }
+  }
+
+  void _handleError(dynamic error, StackTrace? stackTrace) {
+    if (error is MurmurationException) {
+      _logger.error(
+        'Agent execution failed',
+        error,
+        stackTrace,
+        {
+          'agentIndex': _currentIndex,
+          'totalAgents': _totalAgents,
+          'state': _state.toMap(),
+        },
+      );
+    } else {
+      _logger.error(
+        'Unexpected error during agent execution',
+        error,
+        stackTrace,
+        {
+          'agentIndex': _currentIndex,
+          'totalAgents': _totalAgents,
+          'state': _state.toMap(),
+        },
+      );
+    }
+  }
+
+  void _updateProgress(AgentStatus status) {
+    if (_onProgress != null) {
+      _onProgress!(AgentProgress(
+        status: status,
+        currentAgent: _currentIndex,
+        totalAgents: _totalAgents,
+        timestamp: DateTime.now(),
+      ));
+    }
+  }
 
   Future<void> dispose() async {
-    await _progressController?.close();
-    _logger.log('Agent disposed');
-  }
+    if (_isDisposed) return;
 
-  Map<String, dynamic> getState() => _state.toMap();
-
-  List<Tool> getTools() => List.unmodifiable(_tools);
-
-  Map<String, FunctionHandler> getFunctions() => Map.unmodifiable(_functions);
-
-  bool get hasSchema => _outputSchema != null;
-
-  bool get hasMessageHistory => _messageHistory != null;
-
-  @override
-  String toString() {
-    return 'Agent(currentIndex: $_currentAgentIndex, '
-        'totalAgents: $_totalAgents, '
-        'toolCount: ${_tools.length}, '
-        'functionCount: ${_functions.length})';
+    _isDisposed = true;
+    _tools.clear();
+    _functions.clear();
   }
 }
 
-typedef FunctionHandler = Future<dynamic> Function(
-    Map<String, dynamic> parameters);
-
-typedef ProgressCallback = void Function(AgentProgress progress);
-
-class AgentBuilder {
-  final GenerativeModel _model;
-  ImmutableState _state = ImmutableState();
+class _AgentBuilder {
+  final dynamic _model;
+  MurmurationConfig? _config;
+  ImmutableState? _state;
+  MessageHistory? _history;
   final List<Tool> _tools = [];
   final Map<String, FunctionHandler> _functions = {};
-  MurmurationLogger? _logger;
-  MurmurationConfig? _config;
-  StreamController<AgentProgress>? _progressController;
-  int _currentAgentIndex = 1;
+  OutputSchema? _outputSchema;
+  int _currentIndex = 1;
   int _totalAgents = 1;
   ProgressCallback? _onProgress;
-  OutputSchema? _outputSchema;
-  MessageHistory? _messageHistory;
 
-  AgentBuilder(this._model);
+  _AgentBuilder(this._model);
 
-  AgentBuilder withState(Map<String, dynamic> state) {
-    _state = _state.copyWith(state);
-    return this;
-  }
-
-  AgentBuilder addTool(Tool tool) {
-    _tools.add(tool);
-    return this;
-  }
-
-  AgentBuilder addFunction(String name, FunctionHandler handler) {
-    _functions[name] = handler;
-    return this;
-  }
-
-  AgentBuilder withConfig(MurmurationConfig config) {
+  _AgentBuilder withConfig(MurmurationConfig config) {
     _config = config;
     return this;
   }
 
-  AgentBuilder withProgress({
+  _AgentBuilder withState(Map<String, dynamic> state) {
+    _state = ImmutableState(initialData: state);
+    return this;
+  }
+
+  _AgentBuilder withHistory(MessageHistory history) {
+    _history = history;
+    return this;
+  }
+
+  _AgentBuilder withProgress({
     required int current,
     required int total,
     ProgressCallback? callback,
   }) {
-    _currentAgentIndex = current;
+    _currentIndex = current;
     _totalAgents = total;
     _onProgress = callback;
     return this;
   }
 
-  AgentBuilder withSchema(OutputSchema schema) {
+  _AgentBuilder withOutputSchema(OutputSchema schema) {
     _outputSchema = schema;
     return this;
   }
 
-  AgentBuilder withMessageHistory(String threadId) {
-    _messageHistory = MessageHistory(threadId: threadId);
-    return this;
-  }
-
   Future<Agent> build() async {
-    final config = _config ?? const MurmurationConfig(apiKey: '');
-    final logger = _logger ?? config.logger;
-
-    if (_messageHistory != null) {
-      await _messageHistory!.load();
+    if (_config == null) {
+      throw InvalidConfigurationException('Configuration is required');
     }
 
-    return Agent._(
+    if (_state == null) {
+      throw InvalidConfigurationException('State is required');
+    }
+
+    if (_history == null) {
+      _history = MessageHistory(
+        threadId: _config!.threadId ?? DateTime.now().millisecondsSinceEpoch.toString(),
+        maxMessages: _config!.maxMessages,
+        maxTokens: _config!.maxTokens,
+      );
+    }
+
+    return Agent._internal(
       model: _model,
-      state: _state,
-      tools: List.unmodifiable(_tools),
-      functions: Map.unmodifiable(_functions),
-      logger: logger,
-      config: config,
-      progressController: _progressController,
-      currentAgentIndex: _currentAgentIndex,
+      config: _config!,
+      state: _state!,
+      history: _history!,
+      tools: _tools,
+      functions: _functions,
+      outputSchema: _outputSchema,
+      currentIndex: _currentIndex,
       totalAgents: _totalAgents,
       onProgress: _onProgress,
-      outputSchema: _outputSchema,
-      messageHistory: _messageHistory,
     );
-  }
-}
-
-extension AgentExecution on Agent {
-  Future<AgentResult> execute(String input) async {
-    try {
-      _reportProgress('Starting execution', output: input);
-
-      if (_messageHistory != null) {
-        await _messageHistory!.addMessage(Message(
-          role: 'user',
-          content: input,
-        ));
-      }
-
-      final prompt = _buildPrompt(input);
-
-      if (_config.stream) {
-        return AgentResult(
-          output: '',
-          stateVariables: _state.toMap(),
-          stream: _streamResponse(prompt),
-        );
-      }
-
-      return await _executeWithRetry(prompt);
-    } catch (e, stackTrace) {
-      _logger.error('Execution error', e, stackTrace);
-      rethrow;
-    }
-  }
-
-  Future<AgentResult> _executeWithRetry(String prompt) async {
-    int attempts = 0;
-    while (attempts < _config.maxRetries) {
-      try {
-        return await _executePrompt(prompt);
-      } catch (e) {
-        attempts++;
-        if (attempts >= _config.maxRetries) rethrow;
-
-        _logger.error(
-          'Execution attempt $attempts failed, retrying...',
-          e,
-        );
-        await Future.delayed(_config.retryDelay);
-      }
-    }
-    throw MurmurationException('Maximum retry attempts exceeded');
-  }
-
-  Future<AgentResult> _executePrompt(String prompt) async {
-    final content = [Content.text(prompt)];
-    final response = await _model.generateContent(content).timeout(
-      _config.timeout,
-      onTimeout: () {
-        throw MurmurationException('Request timed out');
-      },
-    );
-
-    _reportProgress('Received response', output: response.text);
-
-    final responseText = response.text ?? '';
-
-    if (_messageHistory != null && responseText.isNotEmpty) {
-      await _messageHistory!.addMessage(Message(
-        role: 'assistant',
-        content: responseText,
-      ));
-    }
-
-    if (responseText.contains('function:')) {
-      return await _handleFunctionCall(responseText);
-    }
-
-    if (_outputSchema != null) {
-      return await _handleSchemaValidation(responseText);
-    }
-
-    return AgentResult(
-      output: responseText,
-      stateVariables: _state.toMap(),
-    );
-  }
-
-  Future<AgentResult> _handleFunctionCall(String text) async {
-    final functionCall = _parseFunctionCall(text);
-    final result = await _executeFunctionCall(
-      functionCall.name,
-      functionCall.parameters,
-    );
-
-    if (result is AgentResult) return result;
-
-    return AgentResult(
-      output: result.toString(),
-      stateVariables: _state.toMap(),
-    );
-  }
-
-  Future<dynamic> _executeFunctionCall(
-      String name, Map<String, dynamic> parameters) async {
-    final handler = _functions[name];
-    if (handler == null) {
-      throw MurmurationException('Function not found: $name');
-    }
-
-    try {
-      _logger.log('Executing function: $name with parameters: $parameters');
-      final result = await handler(parameters);
-      _logger.log('Function execution completed');
-      return result;
-    } catch (e, stackTrace) {
-      throw MurmurationException(
-        'Function execution failed',
-        e,
-        stackTrace,
-      );
-    }
-  }
-
-  Future<AgentResult> _handleSchemaValidation(String text) async {
-    try {
-      final parsedOutput = _parseOutput(text);
-      final validatedOutput = _outputSchema!.validateAndConvert(parsedOutput);
-
-      if (!validatedOutput.isValid) {
-        throw MurmurationException(
-          'Schema validation failed: ${validatedOutput.errors.join(", ")}',
-        );
-      }
-
-      return AgentResult(
-        output: jsonEncode(validatedOutput.data),
-        stateVariables: _state.toMap(),
-      );
-    } catch (e, stackTrace) {
-      throw MurmurationException(
-        'Output validation failed',
-        e,
-        stackTrace,
-      );
-    }
-  }
-
-  Map<String, dynamic> _parseOutput(String text) {
-    try {
-      try {
-        return jsonDecode(text) as Map<String, dynamic>;
-      } catch (_) {
-        final Map<String, dynamic> result = {};
-        final lines = text.split('\n');
-
-        for (final line in lines) {
-          final parts = line.split(':');
-          if (parts.length >= 2) {
-            final key = parts[0].trim();
-            final value = parts.sublist(1).join(':').trim();
-            result[key] = value;
-          }
-        }
-
-        return result;
-      }
-    } catch (e, stackTrace) {
-      throw MurmurationException(
-        'Failed to parse output',
-        e,
-        stackTrace,
-      );
-    }
-  }
-
-  Stream<String> _streamResponse(String prompt) async* {
-    _reportProgress('Starting stream response');
-
-    try {
-      final content = [Content.text(prompt)];
-      final response = await _model.generateContent(content);
-
-      if (response.text != null) {
-        final chunks = response.text!.split(' ');
-        for (var chunk in chunks) {
-          _reportProgress('Streaming chunk', output: chunk);
-          yield '$chunk ';
-          await Future.delayed(const Duration(milliseconds: 50));
-        }
-      }
-    } catch (e, stackTrace) {
-      _logger.error('Streaming error', e, stackTrace);
-      rethrow;
-    }
-  }
-
-  void _reportProgress(String status, {String? output}) {
-    final progress = AgentProgress(
-      currentAgent: _currentAgentIndex,
-      totalAgents: _totalAgents,
-      status: status,
-      output: output,
-    );
-
-    _progressController?.add(progress);
-    _onProgress?.call(progress);
-    _logger.log(progress.toString());
-  }
-
-  FunctionCall _parseFunctionCall(String text) {
-    final regex = RegExp(r'function:\s*(\w+)\s*\((.*)\)');
-    final match = regex.firstMatch(text);
-
-    if (match == null) {
-      throw MurmurationException('Invalid function call format');
-    }
-
-    try {
-      return FunctionCall(
-        name: match.group(1)!,
-        parameters: _parseFunctionParameters(match.group(2)!),
-      );
-    } catch (e, stackTrace) {
-      throw MurmurationException(
-        'Failed to parse function call',
-        e,
-        stackTrace,
-      );
-    }
-  }
-
-  Map<String, dynamic> _parseFunctionParameters(String paramsStr) {
-    try {
-      return Map.fromEntries(
-        paramsStr.split(',').map((p) => p.trim().split(':')).map(
-            (p) => MapEntry(p[0].trim(), _parseParameterValue(p[1].trim()))),
-      );
-    } catch (e, stackTrace) {
-      throw MurmurationException(
-        'Failed to parse function parameters',
-        e,
-        stackTrace,
-      );
-    }
-  }
-
-  dynamic _parseParameterValue(String value) {
-    if (value.toLowerCase() == 'true') return true;
-    if (value.toLowerCase() == 'false') return false;
-    if (value == 'null') return null;
-
-    final number = num.tryParse(value);
-    if (number != null) {
-      if (number == number.toInt()) {
-        return number.toInt();
-      }
-      return number;
-    }
-
-    if ((value.startsWith('"') && value.endsWith('"')) ||
-        (value.startsWith("'") && value.endsWith("'"))) {
-      return value.substring(1, value.length - 1);
-    }
-
-    return value;
-  }
-
-  String _buildPrompt(String input) {
-    final toolsDescription = _tools.isEmpty
-        ? ''
-        : '''
-Available tools:
-${_tools.map((t) => '- ${t.name}: ${t.description}').join('\n')}
-''';
-
-    final functionsDescription = _functions.isEmpty
-        ? ''
-        : '''
-Available functions:
-${_functions.keys.map((name) => '- $name').join('\n')}
-''';
-
-    return '''
-Instructions: ${_state.get<String>('role') ?? 'Assistant'}
-$toolsDescription
-$functionsDescription
-Context: ${_state.toMap().toString()}
-Input: $input
-''';
   }
 }

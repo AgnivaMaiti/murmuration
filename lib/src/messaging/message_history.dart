@@ -1,24 +1,32 @@
 import 'dart:convert';
-
+import 'dart:async';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:synchronized/synchronized.dart';
-
-import '../../murmuration.dart';
+import '../exceptions.dart';
+import 'message.dart';
 
 class MessageHistory {
   static final Map<String, _CachedHistory> _cache = {};
   static const Duration _cacheTimeout = Duration(hours: 1);
   static final Lock _cacheLock = Lock();
+  static const int _maxStorageSize = 5 * 1024 * 1024; // 5MB
 
   final String threadId;
   final int maxMessages;
   final int maxTokens;
   final Lock _lock = Lock();
   final List<Message> _messages = [];
-  // ignore: unused_field
   DateTime _lastAccessed = DateTime.now();
+  bool _isLoading = false;
+  bool _isSaving = false;
+  String? _error;
 
   List<Message> get messages => List.unmodifiable(_messages);
+  bool get isLoading => _isLoading;
+  bool get isSaving => _isSaving;
+  String? get error => _error;
+  int get messageCount => _messages.length;
+  bool get isEmpty => _messages.isEmpty;
 
   factory MessageHistory({
     required String threadId,
@@ -55,10 +63,20 @@ class MessageHistory {
 
   Future<void> addMessage(Message message) async {
     await _lock.synchronized(() async {
-      _messages.add(message);
-      _trim();
-      await save();
-      _lastAccessed = DateTime.now();
+      try {
+        _error = null;
+        _messages.add(message);
+        _trim();
+        await save();
+        _lastAccessed = DateTime.now();
+      } catch (e, stackTrace) {
+        _error = 'Failed to add message: $e';
+        throw ResourceException(
+          'Failed to add message',
+          errorDetails: {'error': e.toString()},
+          stackTrace: stackTrace,
+        );
+      }
     });
   }
 
@@ -69,41 +87,109 @@ class MessageHistory {
   }
 
   Future<void> load() async {
+    if (_isLoading) return;
+
     await _lock.synchronized(() async {
-      final prefs = await SharedPreferences.getInstance();
-      final key = 'chat_history_$threadId';
-      final savedMessages = prefs.getString(key);
-      if (savedMessages != null) {
-        final List<dynamic> decoded = jsonDecode(savedMessages);
-        _messages.clear();
-        _messages.addAll(
-          decoded.map((m) => Message.fromJson(m)).toList(),
+      try {
+        _isLoading = true;
+        _error = null;
+
+        final prefs = await SharedPreferences.getInstance();
+        final key = 'chat_history_$threadId';
+        final savedMessages = prefs.getString(key);
+
+        if (savedMessages != null) {
+          final List<dynamic> decoded = jsonDecode(savedMessages);
+          _messages.clear();
+          _messages.addAll(
+            decoded.map((m) => Message.fromJson(m)).toList(),
+          );
+        }
+      } catch (e, stackTrace) {
+        _error = 'Failed to load messages: $e';
+        throw ResourceException(
+          'Failed to load messages',
+          errorDetails: {'error': e.toString()},
+          stackTrace: stackTrace,
         );
+      } finally {
+        _isLoading = false;
       }
     });
   }
 
   Future<void> save() async {
+    if (_isSaving) return;
+
     await _lock.synchronized(() async {
-      final prefs = await SharedPreferences.getInstance();
-      final key = 'chat_history_$threadId';
-      final encoded = jsonEncode(
-        _messages.map((m) => m.toJson()).toList(),
-      );
-      await prefs.setString(key, encoded);
+      try {
+        _isSaving = true;
+        _error = null;
+
+        final prefs = await SharedPreferences.getInstance();
+        final key = 'chat_history_$threadId';
+        final encoded = jsonEncode(
+          _messages.map((m) => m.toJson()).toList(),
+        );
+
+        // Check storage size
+        if (encoded.length > _maxStorageSize) {
+          throw ResourceException(
+            'Message history exceeds maximum storage size',
+            errorDetails: {
+              'size': encoded.length,
+              'maxSize': _maxStorageSize,
+            },
+          );
+        }
+
+        await prefs.setString(key, encoded);
+      } catch (e, stackTrace) {
+        _error = 'Failed to save messages: $e';
+        throw ResourceException(
+          'Failed to save messages',
+          errorDetails: {'error': e.toString()},
+          stackTrace: stackTrace,
+        );
+      } finally {
+        _isSaving = false;
+      }
     });
   }
 
   Future<void> clear() async {
     await _lock.synchronized(() async {
-      _messages.clear();
-      final prefs = await SharedPreferences.getInstance();
-      final key = 'chat_history_$threadId';
-      await prefs.remove(key);
+      try {
+        _error = null;
+        _messages.clear();
+        final prefs = await SharedPreferences.getInstance();
+        final key = 'chat_history_$threadId';
+        await prefs.remove(key);
+        await _cacheLock.synchronized(() {
+          _cache.remove(threadId);
+        });
+      } catch (e, stackTrace) {
+        _error = 'Failed to clear messages: $e';
+        throw ResourceException(
+          'Failed to clear messages',
+          errorDetails: {'error': e.toString()},
+          stackTrace: stackTrace,
+        );
+      }
+    });
+  }
+
+  Future<void> dispose() async {
+    await _lock.synchronized(() async {
       await _cacheLock.synchronized(() {
         _cache.remove(threadId);
       });
     });
+  }
+
+  @override
+  String toString() {
+    return 'MessageHistory(threadId: $threadId, messageCount: ${_messages.length})';
   }
 }
 
