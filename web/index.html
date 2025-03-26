@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html>
+
 <head>
   <!--
     If you are serving your web app in a path other than the root, change the
@@ -18,21 +19,81 @@
 
   <meta charset="UTF-8">
   <meta content="IE=Edge" http-equiv="X-UA-Compatible">
-  <meta name="description" content="A new Flutter project.">
+  <meta name="description"
+    content="Murmuration - A powerful and flexible AI agent framework for building intelligent applications with support for multiple LLM providers and tool chaining.">
 
   <!-- iOS meta tags & icons -->
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black">
-  <meta name="apple-mobile-web-app-title" content="murmuration">
+  <meta name="apple-mobile-web-app-title" content="Murmuration">
   <link rel="apple-touch-icon" href="icons/Icon-192.png">
 
   <!-- Favicon -->
-  <link rel="icon" type="image/png" href="favicon.png"/>
+  <link rel="icon" type="image/png" href="favicon.png" />
 
-  <title>murmuration</title>
+  <title>Murmuration - AI Agent Framework</title>
   <link rel="manifest" href="manifest.json">
+
+  <!-- Theme color for mobile browsers -->
+  <meta name="theme-color" content="#000000">
+
+  <!-- Open Graph / Facebook -->
+  <meta property="og:type" content="website">
+  <meta property="og:url" content="https://agnivamaiti.github.io/murmuration/">
+  <meta property="og:title" content="Murmuration - AI Agent Framework">
+  <meta property="og:description"
+    content="A powerful and flexible AI agent framework for building intelligent applications with support for multiple LLM providers and tool chaining.">
+  <meta property="og:image" content="https://agnivamaiti.github.io/murmuration/assets/logo.png">
+
+  <!-- Twitter -->
+  <meta property="twitter:card" content="summary_large_image">
+  <meta property="twitter:url" content="https://agnivamaiti.github.io/murmuration/">
+  <meta property="twitter:title" content="Murmuration - AI Agent Framework">
+  <meta property="twitter:description"
+    content="A powerful and flexible AI agent framework for building intelligent applications with support for multiple LLM providers and tool chaining.">
+  <meta property="twitter:image" content="https://agnivamaiti.github.io/murmuration/assets/logo.png">
+
+  <!-- Loading indicator -->
+  <style>
+    .loading {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      margin: 0;
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      -ms-transform: translate(-50%, -50%);
+      transform: translate(-50%, -50%);
+      font-family: Arial, sans-serif;
+    }
+
+    .loading:after {
+      content: ' ';
+      display: block;
+      width: 64px;
+      height: 64px;
+      border-radius: 50%;
+      border: 6px solid #000;
+      border-color: #000 transparent #000 transparent;
+      animation: loading 1.2s linear infinite;
+    }
+
+    @keyframes loading {
+      0% {
+        transform: rotate(0deg);
+      }
+
+      100% {
+        transform: rotate(360deg);
+      }
+    }
+  </style>
 </head>
+
 <body>
+  <div class="loading"></div>
   <script src="flutter_bootstrap.js" async></script>
 </body>
+
 </html>

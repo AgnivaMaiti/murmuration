@@ -2,204 +2,211 @@
 <html lang="en">
 
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Murmuration (2.0.0) 🐦✨</title>
-    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&display=swap" rel="stylesheet">
-    <style>
-        body {
-            margin: 0;
-            font-family: 'Roboto', sans-serif;
-            background: linear-gradient(to bottom, #0175C2, #1E1E1E);
-            color: #ECEFF1;
-        }
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Murmuration (3.0.0) 🐦✨</title>
+  <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&display=swap" rel="stylesheet">
+  <style>
+    body {
+      margin: 0;
+      font-family: 'Roboto', sans-serif;
+      background: linear-gradient(to bottom, #0175C2, #1E1E1E);
+      color: #ECEFF1;
+    }
 
-        header {
-            background: #02569B;
-            padding: 20px;
-            text-align: center;
-            box-shadow: 0px 4px 6px rgba(0, 0, 0, 0.2);
-        }
+    header {
+      background: #02569B;
+      padding: 20px;
+      text-align: center;
+      box-shadow: 0px 4px 6px rgba(0, 0, 0, 0.2);
+    }
 
-        header h1 {
-            font-size: 2.5rem;
-            margin: 0;
-            color: #FFFFFF;
-        }
+    header h1 {
+      font-size: 2.5rem;
+      margin: 0;
+      color: #FFFFFF;
+    }
 
-        header p {
-            margin: 5px 0 0;
-            font-size: 1.1rem;
-            color: #B3E5FC;
-        }
+    header p {
+      margin: 5px 0 0;
+      font-size: 1.1rem;
+      color: #B3E5FC;
+    }
 
-        header .buttons {
-            margin-top: 10px;
-        }
+    header .buttons {
+      margin-top: 10px;
+    }
 
-        header .buttons a {
-            text-decoration: none;
-            background: #1E88E5;
-            color: #FFFFFF;
-            padding: 10px 15px;
-            border-radius: 5px;
-            margin: 5px;
-            font-weight: 500;
-            transition: background 0.3s;
-        }
+    header .buttons a {
+      text-decoration: none;
+      background: #1E88E5;
+      color: #FFFFFF;
+      padding: 10px 15px;
+      border-radius: 5px;
+      margin: 5px;
+      font-weight: 500;
+      transition: background 0.3s;
+    }
 
-        header .buttons a:hover {
-            background: #1565C0;
-        }
+    header .buttons a:hover {
+      background: #1565C0;
+    }
 
-        .content {
-            max-width: 800px; /* Adjusted for better centering */
-            margin: 20px auto;
-            padding: 20px;
-            background: #263238;
-            border-radius: 10px;
-            box-shadow: 0px 6px 10px rgba(0, 0, 0, 0.3);
-            text-align: left; /* Align text to the left for better readability */
-        }
+    .content {
+      max-width: 800px;
+      /* Adjusted for better centering */
+      margin: 20px auto;
+      padding: 20px;
+      background: #263238;
+      border-radius: 10px;
+      box-shadow: 0px 6px 10px rgba(0, 0, 0, 0.3);
+      text-align: left;
+      /* Align text to the left for better readability */
+    }
 
-        .content h2 {
-            color: #0288D1;
-            border-bottom: 2px solid #0288D1;
-            padding-bottom: 5px;
-        }
+    .content h2 {
+      color: #0288D1;
+      border-bottom: 2px solid #0288D1;
+      padding-bottom: 5px;
+    }
 
-        .content code {
-            background: #37474F;
-            color: #81D4FA;
-            padding: 2px 4px;
-            border-radius: 3px;
-            font-family: 'Courier New', monospace;
-        }
+    .content code {
+      background: #37474F;
+      color: #81D4FA;
+      padding: 2px 4px;
+      border-radius: 3px;
+      font-family: 'Courier New', monospace;
+    }
 
-        .code-block {
-            background: #37474F;
-            padding: 15px;
-            border-radius: 5px;
-            overflow-x: auto;
-        }
+    .code-block {
+      background: #37474F;
+      padding: 15px;
+      border-radius: 5px;
+      overflow-x: auto;
+    }
 
-        .code-block pre {
-            margin: 0;
-            color: #ECEFF1;
-        }
+    .code-block pre {
+      margin: 0;
+      color: #ECEFF1;
+    }
 
-        .table-of-contents ul {
-            list-style: none;
-            padding: 0;
-        }
+    .table-of-contents ul {
+      list-style: none;
+      padding: 0;
+    }
 
-        .table-of-contents ul li {
-            margin: 5px 0;
-        }
+    .table-of-contents ul li {
+      margin: 5px 0;
+    }
 
-        .table-of-contents a {
-            text-decoration: none;
-            color: #03A9F4;
-        }
+    .table-of-contents a {
+      text-decoration: none;
+      color: #03A9F4;
+    }
 
-        footer {
-            text-align: center;
-            padding: 10px;
-            background: #02569B;
-            margin-top: 20px;
-            color: #B3E5FC;
-        }
+    footer {
+      text-align: center;
+      padding: 10px;
+      background: #02569B;
+      margin-top: 20px;
+      color: #B3E5FC;
+    }
 
-        footer a {
-            color: #81D4FA;
-            text-decoration: none;
-        }
+    footer a {
+      color: #81D4FA;
+      text-decoration: none;
+    }
 
-        .logo {
-            max-width: 400px;
-        }
-    </style>
+    .logo {
+      max-width: 400px;
+    }
+  </style>
 </head>
 
 <body>
-<header>
+  <header>
     <img src="assets/logo.png" alt="Murmuration Logo" class="logo">
-    <h1>Murmuration (2.0.0)</h1>
-    <p>A robust Dart framework for orchestrating multi-agent interactions using Google's Generative AI models. Murmuration provides type-safe, thread-safe, and reliable systems for agent coordination, state management, and function execution.</p>
+    <h1>Murmuration (3.0.0)</h1>
+    <p>A powerful and flexible AI agent framework for building intelligent applications with support for multiple LLM
+      providers and tool chaining. Murmuration provides type-safe, thread-safe, and reliable systems for agent
+      coordination, state management, and function execution.</p>
     <div class="buttons">
-        <a href="https://github.com/AgnivaMaiti/murmuration" target="_blank" style="padding: 2px">GitHub Repository</a>
-        <a href="tutorial.html" style="padding: 2px">Tutorials</a> 
+      <a href="https://github.com/AgnivaMaiti/murmuration" target="_blank" style="padding: 2px">GitHub Repository</a>
+      <a href="tutorial.html" style="padding: 2px">Tutorials</a>
     </div>
-</header>
+  </header>
 
-    <div class="content">
-        <h2>⚠️ WARNING</h2>
-        <p>If you plan to use this in production, ensure you have proper error handling and testing in place as interaction with AI models can be unpredictable.</p>
+  <div class="content">
+    <h2>⚠️ WARNING</h2>
+    <p>If you plan to use this in production, ensure you have proper error handling and testing in place as interaction
+      with AI models can be unpredictable.</p>
 
-        <h2>About Murmuration</h2>
-        <p>The name "Murmuration" is inspired by the mesmerizing flocking behavior of birds, symbolizing the framework's focus on coordinated agent interactions and dynamic workflows. 🐦💫</p>
+    <h2>About Murmuration</h2>
+    <p>The name "Murmuration" is inspired by the mesmerizing flocking behavior of birds, symbolizing the framework's
+      focus on coordinated agent interactions and dynamic workflows. 🐦💫</p>
 
-        <h2>What's New in Murmuration 2.0.0 🐦</h2>
-        <ul>
-            <li><strong>Enhanced Schema Validation</strong>: Redesigned for type safety and stricter validation.</li>
-            <li><strong>Thread-Safe State Management</strong>: Immutable state with type-safe access methods.</li>
-            <li><strong>Improved Error Handling</strong>: New <code>MurmurationException</code> class for detailed error insights.</li>
-            <li><strong>Message History Updates</strong>: Persistent, thread-safe storage with automatic cleanup.</li>
-            <li><strong>New Configuration Options</strong>: Cache support, retry policies, and more.</li>
-            <li><strong>Streaming Response Enhancements</strong>: Better concurrency and progress tracking.</li>
-        </ul>
+    <h2>What's New in Murmuration 3.0.0 🐦</h2>
+    <ul>
+      <li><strong>Multiple LLM Provider Support</strong>: Added support for OpenAI, Google, and Anthropic models with an
+        extensible provider system.</li>
+      <li><strong>Enhanced Tool System</strong>: Improved type safety and validation for tools and parameters.</li>
+      <li><strong>Improved State Management</strong>: Thread-safe operations with immutable state and type-safe access.
+      </li>
+      <li><strong>Comprehensive Error Handling</strong>: New error handling system with detailed reporting.</li>
+      <li><strong>Enhanced Logging</strong>: Structured logging with performance metrics and error tracking.</li>
+      <li><strong>Security Improvements</strong>: Secure API key handling, input validation, and access control.</li>
+      <li><strong>Resource Management</strong>: Memory optimization, connection pooling, and rate limiting.</li>
+    </ul>
 
-        <h2>Breaking Changes</h2>
-        <p>This version includes significant changes that may require updates to your implementation. Please refer to the <a href="migration-guide.html">Migration Guide</a> for detailed steps to upgrade smoothly.</p>
-        <h2>Table of Contents 📚</h2>
-        <div class="table-of-contents">
-            <ul>
-                <li><a href="#overview">Overview</a></li>
-                <li><a href="#installation">Installation</a></li>
-                <li><a href="#core-features">Core Features</a></li>
-                <li><a href="#usage-guide">Usage Guide</a></li>
-                <li><a href="#architecture-overview">Architecture Overview</a></li>
-                <li><a href="#core-systems">Core Systems</a></li>
-                <li><a href="#real-world-examples">Real-World Examples</a></li>
-                <li><a href="#troubleshooting">Troubleshooting</a></li>
-                <li><a href="#best-practices">Best Practices</a></li>
-                <li><a href="#contributing">Contributing</a></li>
-                <li><a href="#license">License</a></li>
-                <li><a href="#author">Author</a></li>
-            </ul>
-        </div>
+    <h2>Breaking Changes</h2>
+    <p>This version includes significant changes that may require updates to your implementation. Please refer to the <a
+        href="migration-guide.html">Migration Guide</a> for detailed steps to upgrade smoothly.</p>
+    <h2>Table of Contents 📚</h2>
+    <div class="table-of-contents">
+      <ul>
+        <li><a href="#overview">Overview</a></li>
+        <li><a href="#installation">Installation</a></li>
+        <li><a href="#core-features">Core Features</a></li>
+        <li><a href="#usage-guide">Usage Guide</a></li>
+        <li><a href="#architecture-overview">Architecture Overview</a></li>
+        <li><a href="#core-systems">Core Systems</a></li>
+        <li><a href="#real-world-examples">Real-World Examples</a></li>
+        <li><a href="#troubleshooting">Troubleshooting</a></li>
+        <li><a href="#best-practices">Best Practices</a></li>
+        <li><a href="#contributing">Contributing</a></li>
+        <li><a href="#license">License</a></li>
+        <li><a href="#author">Author</a></li>
+      </ul>
+    </div>
 
-        <h2 id="overview">Overview 🔍</h2>
-        <p>Murmuration offers:</p>
-        <ul>
-            <li>Type-safe schema validation system for ensuring data integrity</li>
-            <li>Thread-safe state management to prevent race conditions</li>
-            <li>Robust error handling with detailed error reporting</li>
-            <li>Message history management with persistence</li>
-            <li>Tool and function integration for extended capabilities</li>
-            <li>Agent chain orchestration for complex workflows</li>
-            <li>Streaming response support for real-time processing</li>
-            <li>Comprehensive logging for debugging and monitoring</li>
-        </ul>
+    <h2 id="overview">Overview 🔍</h2>
+    <p>Murmuration offers:</p>
+    <ul>
+      <li>Type-safe schema validation system for ensuring data integrity</li>
+      <li>Thread-safe state management to prevent race conditions</li>
+      <li>Robust error handling with detailed error reporting</li>
+      <li>Message history management with persistence</li>
+      <li>Tool and function integration for extended capabilities</li>
+      <li>Agent chain orchestration for complex workflows</li>
+      <li>Streaming response support for real-time processing</li>
+      <li>Comprehensive logging for debugging and monitoring</li>
+    </ul>
 
-        <h2 id="installation">Installation ⚙️</h2>
-        <p>Add to your <code>pubspec.yaml</code>:</p>
-        <div class="code-block">
-            <pre>dependencies:
-  murmuration: ^2.0.0
-  google_generative_ai: ^latest_version
-  shared_preferences: ^latest_version
-  synchronized: ^latest_version</pre>
-        </div>
-        <p>Then run:</p>
-        <div class="code-block">
-            <pre>dart pub get</pre>
-        </div>
+    <h2 id="installation">Installation ⚙️</h2>
+    <p>Add to your <code>pubspec.yaml</code>:</p>
+    <div class="code-block">
+      <pre>dependencies:
+  murmuration: ^3.0.0</pre>
+    </div>
+    <p>Then run:</p>
+    <div class="code-block">
+      <pre>dart pub get</pre>
+    </div>
 
-        <h2 id="core-features">Core Features 🛠️</h2>
-        <h3>Configuration</h3>
-        <div class="code-block">
-            <pre>final config = MurmurationConfig(
+    <h2 id="core-features">Core Features 🛠️</h2>
+    <h3>Configuration</h3>
+    <div class="code-block">
+      <pre>final config = MurmurationConfig(
   apiKey: 'your-api-key',
   model: 'gemini-1.5-pro',  // Specify the model to use
   debug: true,              // Enable debug mode for verbose logging
@@ -211,22 +218,22 @@
   enableCache: true,       // Enable response caching
   cacheTimeout: Duration(hours: 1)  // Cache expiration time
 );</pre>
-        </div>
+    </div>
 
-        <h3>Error Handling</h3>
-        <div class="code-block">
-            <pre>try {
+    <h3>Error Handling</h3>
+    <div class="code-block">
+      <pre>try {
   final result = await agent.execute("Process data");
 } on MurmurationException catch (e) {
   print('Error: ${e.message}');  // Human-readable error message
   print('Original error: ${e.originalError}');  // Original exception
   print('Stack trace: ${e.stackTrace}');  // Full stack trace
 }</pre>
-        </div>
+    </div>
 
-        <h3>Logging</h3>
-        <div class="code-block">
-            <pre>final logger = MurmurationLogger(
+    <h3>Logging</h3>
+    <div class="code-block">
+      <pre>final logger = MurmurationLogger(
   enabled: true,
   onLog: (message) => print('Log: $message'),  // Log handler
   onError: (message, error, stackTrace) {      // Error handler
@@ -234,12 +241,12 @@
     print('Details: $error');
   }
 );</pre>
-        </div>
+    </div>
 
-        <h2 id="usage-guide">Usage Guide 📖</h2>
-        <h3>Basic Usage</h3>
-        <div class="code-block">
-            <pre>void main() async {
+    <h2 id="usage-guide">Usage Guide 📖</h2>
+    <h3>Basic Usage</h3>
+    <div class="code-block">
+      <pre>void main() async {
   final murmur = Murmuration(config);
 
   final agent = await murmur.createAgent(
@@ -251,12 +258,12 @@
   final result = await agent.execute("Process this data");
   print(result.output);
 }</pre>
-        </div>
+    </div>
 
-        <h3>Advanced Usage</h3>
-        <h4>Custom Schema Fields</h4>
-        <div class="code-block">
-            <pre>class DateTimeSchemaField extends SchemaField<DateTime> {
+    <h3>Advanced Usage</h3>
+    <h4>Custom Schema Fields</h4>
+    <div class="code-block">
+      <pre>class DateTimeSchemaField extends SchemaField<DateTime> {
   final DateTime? minDate;
   final DateTime? maxDate;
 
@@ -309,11 +316,11 @@ final schema = OutputSchema(
     )
   }
 );</pre>
-        </div>
+    </div>
 
-        <h3>Streaming Responses 🌊</h3>
-        <div class="code-block">
-            <pre>final config = MurmurationConfig(
+    <h3>Streaming Responses 🌊</h3>
+    <div class="code-block">
+      <pre>final config = MurmurationConfig(
   apiKey: 'your-api-key',
   stream: true  // Enable streaming
 );
@@ -326,11 +333,11 @@ if (result.stream != null) {
     print(chunk);  // Process each chunk as it arrives
   }
 }</pre>
-        </div>
+    </div>
 
-        <h3>Agent Chains ⛓️</h3>
-        <div class="code-block">
-            <pre>final result = await murmur.runAgentChain(
+    <h3>Agent Chains ⛓️</h3>
+    <div class="code-block">
+      <pre>final result = await murmur.runAgentChain(
   input: documentText,
   agentInstructions: [
     {'role': 'Document Parser'},
@@ -357,12 +364,12 @@ if (result.stream != null) {
 );
 
 print('Final report: ${result.finalOutput}');</pre>
-        </div>
+    </div>
 
-        <h2 id="core-systems">Core Systems 🔧</h2>
-        <h3>1. Message History</h3>
-        <div class="code-block">
-            <pre>final history = MessageHistory(
+    <h2 id="core-systems">Core Systems 🔧</h2>
+    <h3>1. Message History</h3>
+    <div class="code-block">
+      <pre>final history = MessageHistory(
   threadId: 'user-123',       // Unique thread identifier
   maxMessages: 50,            // Maximum messages to retain
   maxTokens: 4000             // Maximum total tokens
@@ -377,23 +384,23 @@ await history.addMessage(Message(
 await history.save();    // Persist to storage
 await history.load();    // Load from storage
 await history.clear();   // Clear history</pre>
-        </div>
+    </div>
 
-        <h3>2. State Management</h3>
-        <div class="code-block">
-            <pre>final state = ImmutableState()
+    <h3>2. State Management</h3>
+    <div class="code-block">
+      <pre>final state = ImmutableState()
   .copyWith({
     'user': {'name': 'John', 'age': 30},
     'preferences': {'theme': 'dark'}
   });
 
 final userName = state.get<String>('user.name');  // Type-safe access</pre>
-        </div>
+    </div>
 
-        <h2 id="real-world-examples">Real-World Examples 💡</h2>
-        <h3>Customer Support Bot</h3>
-        <div class="code-block">
-            <pre>final supportBot = await murmur.createAgent({
+    <h2 id="real-world-examples">Real-World Examples 💡</h2>
+    <h3>Customer Support Bot</h3>
+    <div class="code-block">
+      <pre>final supportBot = await murmur.createAgent({
   'role': 'Customer Support',
   'context': '''
     You are a helpful customer support agent.
@@ -417,11 +424,11 @@ supportBot.addTool(Tool(
 ));
 
 final response = await supportBot.execute(userQuery);</pre>
-        </div>
+    </div>
 
-        <h3>Data Processing Pipeline</h3>
-        <div class="code-block">
-            <pre>final pipeline = await murmur.runAgentChain(
+    <h3>Data Processing Pipeline</h3>
+    <div class="code-block">
+      <pre>final pipeline = await murmur.runAgentChain(
   input: rawData,
   agentInstructions: [
     {'role': 'Data Validator'},
@@ -442,100 +449,101 @@ final response = await supportBot.execute(userQuery);</pre>
     )
   ]
 );</pre>
-        </div>
+    </div>
 
-        <h2 id="troubleshooting">Troubleshooting 🔍</h2>
-        <h3>Common Issues</h3>
-        <h4>Timeout Errors</h4>
-        <div class="code-block">
-            <pre>// Increase timeout duration
+    <h2 id="troubleshooting">Troubleshooting 🔍</h2>
+    <h3>Common Issues</h3>
+    <h4>Timeout Errors</h4>
+    <div class="code-block">
+      <pre>// Increase timeout duration
 final config = MurmurationConfig(
   timeout: Duration(minutes: 2),
   maxRetries: 5
 );</pre>
-        </div>
+    </div>
 
-        <h4>Memory Issues</h4>
-        <div class="code-block">
-            <pre>// Manage message history
+    <h4>Memory Issues</h4>
+    <div class="code-block">
+      <pre>// Manage message history
 final config = MurmurationConfig(
   maxMessages: 30,
   maxTokens: 2000
 );</pre>
-        </div>
+    </div>
 
-        <h4>State Management Issues</h4>
-        <div class="code-block">
-            <pre>// Use proper state copying
+    <h4>State Management Issues</h4>
+    <div class="code-block">
+      <pre>// Use proper state copying
 final newState = state.copyWith(newData);
 // Don't modify state directly
 state._data['key'] = value;  // Wrong!</pre>
-        </div>
-
-        <h2 id="best-practices">Best Practices 🏆</h2>
-        <ol>
-            <li><strong>Error Handling</strong>
-                <ul>
-                    <li>Always wrap agent execution in try-catch blocks</li>
-                    <li>Implement proper retry mechanisms</li>
-                    <li>Log errors comprehensively</li>
-                    <li>Handle timeouts appropriately</li>
-                </ul>
-            </li>
-            <li><strong>Performance</strong>
-                <ul>
-                    <li>Enable caching for repetitive tasks</li>
-                    <li>Implement cleanup mechanisms</li>
-                    <li>Monitor memory usage</li>
-                    <li>Use appropriate timeout values</li>
-                </ul>
-            </li>
-            <li><strong>Security</strong>
-                <ul>
-                    <li>Validate all inputs</li>
-                    <li>Handle sensitive data carefully</li>
-                    <li>Implement proper access controls</li>
-                    <li>Monitor API usage</li>
-                </ul>
-            </li>
-            <li><strong>Message History</strong>
-                <ul>
-                    <li>Set appropriate message limits</li>
-                    <li>Implement cleanup policies</li>
-                    <li>Handle thread IDs carefully</li>
-                    <li>Monitor storage usage</li>
-                </ul>
-            </li>
-        </ol>
-
-        <h2 id="contributing">Contributing 🤝</h2>
-        <p>Guidelines for contributing to Murmuration:</p>
-        <ol>
-            <li>Fork the repository</li>
-            <li>Create a feature branch</li>
-            <li>Implement your changes</li>
-            <li>Add tests</li>
-            <li>Submit a pull request</li>
-        </ol>
-        <p>Please ensure your code:</p>
-        <ul>
-            <li>Follows Dart conventions</li>
-            <li>Includes proper documentation</li>
-            <li>Has comprehensive error handling</li>
-            <li>Includes appropriate tests</li>
-            <li>Maintains type safety</li>
-        </ul>
-
-        <h2 id="license">License 📜</h2>
-        <p>This project is licensed under the MIT License - see the <a href="https://github.com/AgnivaMaiti/murmuration/blob/main/LICENSE">LICENSE</a> file for details.</p>
-
-        <h2 id="author">Author ✍️</h2>
-        <p>This project is authored and maintained by <a href="https://github.com/AgnivaMaiti">Agniva Maiti</a>.</p>
     </div>
 
-    <footer>
-        <p>Created by <strong>Agniva Maiti</strong> © 2025.</p>
-    </footer>
+    <h2 id="best-practices">Best Practices 🏆</h2>
+    <ol>
+      <li><strong>Error Handling</strong>
+        <ul>
+          <li>Always wrap agent execution in try-catch blocks</li>
+          <li>Implement proper retry mechanisms</li>
+          <li>Log errors comprehensively</li>
+          <li>Handle timeouts appropriately</li>
+        </ul>
+      </li>
+      <li><strong>Performance</strong>
+        <ul>
+          <li>Enable caching for repetitive tasks</li>
+          <li>Implement cleanup mechanisms</li>
+          <li>Monitor memory usage</li>
+          <li>Use appropriate timeout values</li>
+        </ul>
+      </li>
+      <li><strong>Security</strong>
+        <ul>
+          <li>Validate all inputs</li>
+          <li>Handle sensitive data carefully</li>
+          <li>Implement proper access controls</li>
+          <li>Monitor API usage</li>
+        </ul>
+      </li>
+      <li><strong>Message History</strong>
+        <ul>
+          <li>Set appropriate message limits</li>
+          <li>Implement cleanup policies</li>
+          <li>Handle thread IDs carefully</li>
+          <li>Monitor storage usage</li>
+        </ul>
+      </li>
+    </ol>
+
+    <h2 id="contributing">Contributing 🤝</h2>
+    <p>Guidelines for contributing to Murmuration:</p>
+    <ol>
+      <li>Fork the repository</li>
+      <li>Create a feature branch</li>
+      <li>Implement your changes</li>
+      <li>Add tests</li>
+      <li>Submit a pull request</li>
+    </ol>
+    <p>Please ensure your code:</p>
+    <ul>
+      <li>Follows Dart conventions</li>
+      <li>Includes proper documentation</li>
+      <li>Has comprehensive error handling</li>
+      <li>Includes appropriate tests</li>
+      <li>Maintains type safety</li>
+    </ul>
+
+    <h2 id="license">License 📜</h2>
+    <p>This project is licensed under the MIT License - see the <a
+        href="https://github.com/AgnivaMaiti/murmuration/blob/main/LICENSE">LICENSE</a> file for details.</p>
+
+    <h2 id="author">Author ✍️</h2>
+    <p>This project is authored and maintained by <a href="https://github.com/AgnivaMaiti">Agniva Maiti</a>.</p>
+  </div>
+
+  <footer>
+    <p>Created by <strong>Agniva Maiti</strong> © 2024.</p>
+  </footer>
 </body>
 
 </html>
