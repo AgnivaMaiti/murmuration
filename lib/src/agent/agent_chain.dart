@@ -34,7 +34,7 @@ class AgentChain {
         _progressController = progressController;
 
   static Future<AgentChain> builder() async {
-    return _ChainBuilder();
+    return _ChainBuilder().build();
   }
 
   @override

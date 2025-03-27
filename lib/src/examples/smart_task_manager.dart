@@ -164,7 +164,9 @@ You must respond with ONLY this (no other text):
   Map<String, dynamic> _parseTaskResponse(AgentResult result) {
     String response = result.output;
     if (result.stream != null) {
-      response = result.stream!.join();
+      StringBuffer buffer = StringBuffer();
+      result.stream!.forEach((chunk) => buffer.write(chunk));
+      response = buffer.toString();
     }
 
     String cleanResponse = response.trim();
@@ -220,9 +222,11 @@ class _TaskManagerScreenState extends State<TaskManagerScreen> {
             ? LLMProvider.google
             : LLMProvider.openai,
         apiKey: 'your-secure-api-key',
-        model: _selectedProvider == 'google' ? 'gemini-pro' : 'gpt-3.5-turbo',
+        modelConfig: ModelConfig(
+          modelName: _selectedProvider == 'google' ? 'gemini-pro' : 'gpt-3.5-turbo',
+          maxTokens: 1000,
+        ),
         debug: true,
-        maxTokens: 1000,
       );
 
       final murmuration = Murmuration(config);

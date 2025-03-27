@@ -44,8 +44,27 @@ abstract class SchemaField<T> {
 
       return ValidationResult.success(converted);
     } catch (e, stackTrace) {
-      return ValidationResult.failure('Conversion error: $e', stackTrace);
+      return ValidationResult.failure(
+        'Conversion error: $e',
+        stackTrace: stackTrace,
+      );
     }
+  }
+
+  Map<String, dynamic> toJson() {
+    return {
+      'description': description,
+      'type': T.toString(),
+      if (enumValues != null) 'enum': enumValues,
+      if (defaultValue != null) 'default': defaultValue,
+      'required': required,
+      if (pattern != null) 'pattern': pattern,
+      if (minimum != null) 'minimum': minimum,
+      if (maximum != null) 'maximum': maximum,
+      if (minLength != null) 'minLength': minLength,
+      if (maxLength != null) 'maxLength': maxLength,
+      if (examples != null) 'examples': examples,
+    };
   }
 
   @override

@@ -7,7 +7,7 @@ class ChainResult {
   final List<AgentProgress> progress;
   final DateTime timestamp;
 
-  const ChainResult({
+  ChainResult({
     required this.results,
     required this.finalOutput,
     required this.progress,

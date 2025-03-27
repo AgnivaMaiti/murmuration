@@ -38,7 +38,9 @@ class TextClassifier {
             provider:
                 provider == 'google' ? LLMProvider.google : LLMProvider.openai,
             apiKey: apiKey,
-            model: provider == 'google' ? 'gemini-pro' : 'gpt-3.5-turbo',
+            modelConfig: ModelConfig(
+              modelName: provider == 'google' ? 'gemini-pro' : 'gpt-3.5-turbo',
+            ),
             debug: true,
             threadId: _threadId,
             maxRetries: 3,

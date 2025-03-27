@@ -70,7 +70,9 @@ class _ChatScreenState extends State<ChatScreen> {
           ? LLMProvider.google
           : LLMProvider.openai,
       apiKey: 'your-secure-api-key',
-      model: _selectedProvider == 'google' ? 'gemini-pro' : 'gpt-3.5-turbo',
+      modelConfig: ModelConfig(
+        modelName: _selectedProvider == 'google' ? 'gemini-pro' : 'gpt-3.5-turbo',
+      ),
     );
 
     _murmuration = Murmuration(config);

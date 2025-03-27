@@ -1,6 +1,7 @@
 import 'dart:convert';
 import 'dart:math';
 import 'package:http/http.dart' as http;
+import 'package:synchronized/synchronized.dart';
 import '../config/murmuration_config.dart';
 import '../messaging/message.dart';
 import '../exceptions.dart';

@@ -156,6 +156,6 @@ class Message {
         timestamp,
         correlationId,
         Object.hashAll(tags ?? []),
-        Object.hashAll(context?.entries ?? []),
+        Object.hashAll((context?.entries ?? []).toList()),
       );
 }

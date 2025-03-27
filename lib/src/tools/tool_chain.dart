@@ -4,6 +4,7 @@ import '../logging/logger.dart';
 import '../schema/output_schema.dart';
 import '../schema/validation_result.dart';
 import 'tool.dart';
+import 'dart:convert';
 
 class ToolChain {
   final String name;
@@ -45,7 +46,7 @@ class ToolChain {
         try {
           _logger.info(
             'Executing tool ${i + 1}/${tools.length}: ${tool.name}',
-            metadata: {
+            {
               'chain': name,
               'tool': tool.name,
               'toolIndex': i + 1,
@@ -63,7 +64,7 @@ class ToolChain {
               errorDetails: {
                 'tool': tool.name,
                 'error': validationResult.error,
-                'details': validationResult.details,
+                'data': validationResult.data,
               },
             );
           }
@@ -72,7 +73,7 @@ class ToolChain {
 
           _logger.info(
             'Tool execution completed',
-            metadata: {
+            {
               'chain': name,
               'tool': tool.name,
               'toolIndex': i + 1,
@@ -113,7 +114,7 @@ class ToolChain {
 
       _logger.info(
         'Chain execution completed',
-        metadata: {
+        {
           'chain': name,
           'duration': DateTime.now().difference(startTime),
           'toolCount': tools.length,
@@ -163,11 +164,21 @@ class ToolChain {
         return ValidationResult.success(output);
       }
 
-      final result = outputSchema!.validateAndConvert(output);
+      Map<String, dynamic> outputMap;
+      try {
+        outputMap = jsonDecode(output) as Map<String, dynamic>;
+      } catch (e) {
+        return ValidationResult.failure(
+          'Output validation error: Invalid JSON format',
+          data: {'output': output},
+        );
+      }
+
+      final result = outputSchema!.validateAndConvert(outputMap);
       if (!result.isSuccess) {
         return ValidationResult.failure(
           'Output validation failed',
-          details: {'error': result.error},
+          data: {'error': result.error},
         );
       }
 
@@ -175,7 +186,7 @@ class ToolChain {
     } catch (e) {
       return ValidationResult.failure(
         'Output validation error: $e',
-        details: {'output': output},
+        data: {'output': output},
       );
     }
   }

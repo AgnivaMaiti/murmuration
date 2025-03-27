@@ -1,16 +1,15 @@
 import 'schema_field.dart';
 import 'validation_result.dart';
-import '../exceptions.dart';
 
 class OutputSchema {
   final Map<String, SchemaField> fields;
   final bool strict;
-  final Set<String> _validatingFields;
+  final Set<String> _validatingFields = {};
 
-  const OutputSchema({
+  OutputSchema({
     required this.fields,
     this.strict = true,
-  }) : _validatingFields = {};
+  });
 
   ValidationResult validateAndConvert(Map<String, dynamic> data) {
     final validatedData = <String, dynamic>{};
@@ -70,7 +69,10 @@ class OutputSchema {
 
       return ValidationResult.success(converted);
     } catch (e, stackTrace) {
-      return ValidationResult.failure('Conversion error: $e', stackTrace);
+      return ValidationResult.failure(
+        'Conversion error: $e',
+        stackTrace: stackTrace,
+      );
     }
   }
 
@@ -97,5 +99,12 @@ class OutputSchema {
   @override
   String toString() {
     return 'OutputSchema(fields: ${fields.keys.join(', ')})';
+  }
+
+  Map<String, dynamic> toJson() {
+    return {
+      'fields': fields.map((key, value) => MapEntry(key, value.toJson())),
+      'strict': strict,
+    };
   }
 }

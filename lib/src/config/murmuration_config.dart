@@ -126,8 +126,8 @@ class MurmurationConfig {
     this.baseUrl,
     this.providerOptions,
   })  : modelConfig =
-            modelConfig ?? const ModelConfig(modelName: 'gpt-3.5-turbo'),
-        logger = logger ?? const MurmurationLogger() {
+            modelConfig ?? ModelConfig(modelName: 'gpt-3.5-turbo'),
+        logger = logger ?? MurmurationLogger() {
     _validateConfig();
   }
 

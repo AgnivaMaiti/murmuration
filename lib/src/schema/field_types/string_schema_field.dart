@@ -1,8 +1,11 @@
 import '../schema_field.dart';
 
 class StringSchemaField extends SchemaField<String> {
+  @override
   final int? minLength;
+  @override
   final int? maxLength;
+  @override
   final String? pattern;
   
   @override

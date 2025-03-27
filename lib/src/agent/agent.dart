@@ -16,6 +16,21 @@ import '../client/openai_client.dart';
 
 typedef FunctionHandler = Future<String> Function(Map<String, dynamic>);
 
+class FunctionCall {
+  final String name;
+  final Map<String, dynamic> arguments;
+
+  FunctionCall({
+    required this.name,
+    required this.arguments,
+  });
+
+  Map<String, dynamic> toJson() => {
+        'name': name,
+        'arguments': arguments,
+      };
+}
+
 class Agent {
   final dynamic _model;
   final MurmurationConfig _config;
@@ -53,28 +68,39 @@ class Agent {
         _totalAgents = totalAgents,
         _onProgress = onProgress;
 
-  static Future<Agent> builder(dynamic model) async {
-    return _AgentBuilder(model).build();
+  static _AgentBuilder builder(dynamic model) {
+    return _AgentBuilder(model);
   }
 
   void addTool(Tool tool) {
     if (_isDisposed) {
-      throw StateException('Agent has been disposed');
+      throw StateException(
+        'Agent has been disposed',
+        errorDetails: {'agentIndex': _currentIndex, 'totalAgents': _totalAgents},
+      );
     }
     _tools.add(tool);
+    _logger.info('Added tool: ${tool.name}');
   }
 
   void addFunction(String name, FunctionHandler handler) {
     if (_isDisposed) {
-      throw StateException('Agent has been disposed');
+      throw StateException(
+        'Agent has been disposed',
+        errorDetails: {'agentIndex': _currentIndex, 'totalAgents': _totalAgents},
+      );
     }
     _functions[name] = handler;
+    _logger.info('Added function: $name');
   }
 
   @override
   Future<AgentResult> execute(String input) async {
     if (_isDisposed) {
-      throw StateException('Agent has been disposed');
+      throw StateException(
+        'Agent has been disposed',
+        errorDetails: {'agentIndex': _currentIndex, 'totalAgents': _totalAgents},
+      );
     }
 
     try {
@@ -96,6 +122,11 @@ class Agent {
       throw MurmurationException(
         'Failed to execute agent',
         code: ErrorCode.unknownError,
+        errorDetails: {
+          'agentIndex': _currentIndex,
+          'totalAgents': _totalAgents,
+          'state': _state.toMap(),
+        },
         originalError: e,
         stackTrace: stackTrace,
       );
@@ -106,51 +137,23 @@ class Agent {
     if (input.isEmpty) {
       throw ValidationException(
         'Input cannot be empty',
-        errorDetails: {'input': input},
+        code: ErrorCode.invalidInput,
       );
     }
-
-    if (input.length > _config.maxTokens) {
-      throw TokenLimitException(
-        'Input exceeds maximum token limit',
-        errorDetails: {
-          'inputLength': input.length,
-          'maxTokens': _config.maxTokens,
-        },
-      );
-    }
+    _logger.debug('Validated input');
   }
 
   Future<List<Message>> _prepareMessages(String input) async {
     final messages = <Message>[];
-
-    // Add system message if available
-    final systemMessage = _state.get<String>('systemMessage');
-    if (systemMessage != null) {
-      messages.add(Message(
-        role: MessageRole.system,
-        content: systemMessage,
-      ));
-    }
-
-    // Add context from state if available
-    final context = _state.get<Map<String, dynamic>>('context');
-    if (context != null) {
-      messages.add(Message(
-        role: MessageRole.system,
-        content: 'Context: ${jsonEncode(context)}',
-      ));
-    }
-
-    // Add history messages
-    messages.addAll(_history.messages);
-
-    // Add current input
+    messages.add(Message(
+      role: MessageRole.system,
+      content: _getSystemPrompt(),
+    ));
     messages.add(Message(
       role: MessageRole.user,
       content: input,
     ));
-
+    _logger.debug('Prepared messages');
     return messages;
   }
 
@@ -159,180 +162,151 @@ class Agent {
       final response = await _model.chatCompletion(
         messages: messages,
         stream: _config.stream,
-        functions: _prepareFunctions(),
-        functionCall: _determineFunctionCall(),
+        functions: _getFunctionDefinitions(),
       );
-
-      if (response['choices'] == null || response['choices'].isEmpty) {
-        throw MurmurationException(
-          'Invalid response format from model',
-          code: ErrorCode.invalidResponse,
-          errorDetails: {'response': response},
-        );
-      }
-
+      _logger.debug('Got model response');
       return response;
     } catch (e, stackTrace) {
+      _logger.error('Failed to get model response', e, stackTrace);
       throw MurmurationException(
-        'Failed to get model response: $e',
-        code: ErrorCode.unknownError,
+        'Failed to get model response',
+        code: ErrorCode.modelError,
+        errorDetails: {
+          'model': _config.modelConfig.modelName,
+          'provider': _config.provider.name,
+        },
         originalError: e,
         stackTrace: stackTrace,
       );
     }
-  }
-
-  Map<String, dynamic>? _prepareFunctions() {
-    if (_functions.isEmpty) return null;
-
-    return {
-      for (final entry in _functions.entries)
-        entry.key: {
-          'name': entry.key,
-          'description':
-              _state.get<String>('function_${entry.key}_description') ?? '',
-          'parameters': _state.get<Map<String, dynamic>>(
-                  'function_${entry.key}_parameters') ??
-              {},
-        }
-    };
-  }
-
-  String? _determineFunctionCall() {
-    if (_functions.isEmpty) return null;
-    return _state.get<String>('function_call') ?? 'auto';
   }
 
   Future<AgentResult> _processResponse(Map<String, dynamic> response) async {
-    final choice = response['choices'][0];
-    final message = choice['message'];
-    final functionCall = message['function_call'];
-
-    if (functionCall != null) {
-      return await _handleFunctionCall(functionCall);
-    }
-
-    final content = message['content'] as String;
-    if (_outputSchema != null) {
-      return await _validateAndFormatOutput(content);
-    }
-
-    return AgentResult(
-      output: content,
-      metadata: {
-        'model': _config.modelConfig.modelName,
-        'usage': response['usage'],
-        'finish_reason': choice['finish_reason'],
-      },
-    );
-  }
-
-  Future<AgentResult> _handleFunctionCall(
-      Map<String, dynamic> functionCall) async {
-    final name = functionCall['name'] as String;
-    final parameters = functionCall['arguments'] as Map<String, dynamic>;
-    final handler = _functions[name];
-
-    if (handler == null) {
-      throw MurmurationException(
-        'Unknown function: $name',
-        code: ErrorCode.unknownError,
-        errorDetails: {'function': name},
-      );
-    }
-
     try {
-      final result = await handler(parameters);
+      final functionCall = _extractFunctionCall(response);
+      if (functionCall != null) {
+        return await _handleFunctionCall(functionCall);
+      }
       return AgentResult(
-        output: result,
-        metadata: {
-          'function': name,
-          'parameters': parameters,
-        },
+        output: response['choices'][0]['message']['content'],
       );
     } catch (e, stackTrace) {
+      _logger.error('Failed to process response', e, stackTrace);
       throw MurmurationException(
-        'Failed to execute function $name: $e',
-        code: ErrorCode.unknownError,
+        'Failed to process response',
+        code: ErrorCode.invalidOutput,
+        errorDetails: {'response': response},
         originalError: e,
         stackTrace: stackTrace,
       );
     }
   }
 
-  Future<AgentResult> _validateAndFormatOutput(String content) async {
-    try {
-      final data = jsonDecode(content);
-      final result = _outputSchema!.validateAndConvert(data);
+  FunctionCall? _extractFunctionCall(Map<String, dynamic> response) {
+    final message = response['choices'][0]['message'];
+    final functionCall = message['function_call'];
+    if (functionCall != null) {
+      return FunctionCall(
+        name: functionCall['name'],
+        arguments: functionCall['arguments'],
+      );
+    }
+    return null;
+  }
 
-      if (!result.isSuccess) {
-        throw ValidationException(
-          'Output validation failed: ${result.error}',
-          code: ErrorCode.validationError,
-          errorDetails: {'content': content},
-        );
-      }
-
-      return AgentResult(
-        output: jsonEncode(result.value),
-        metadata: {
-          'model': _config.modelConfig.modelName,
-          'schema': _outputSchema.toString(),
+  Future<AgentResult> _handleFunctionCall(FunctionCall functionCall) async {
+    final handler = _functions[functionCall.name];
+    if (handler == null) {
+      throw MurmurationException(
+        'Unknown function: ${functionCall.name}',
+        code: ErrorCode.invalidFunction,
+        errorDetails: {
+          'function': functionCall.name,
+          'availableFunctions': _functions.keys.toList(),
         },
       );
+    }
+
+    try {
+      final result = await handler(functionCall.arguments);
+      return AgentResult(
+        output: result,
+      );
     } catch (e, stackTrace) {
-      throw ValidationException(
-        'Failed to validate output: $e',
-        code: ErrorCode.validationError,
-        errorDetails: {'content': content},
+      _logger.error('Failed to handle function call', e, stackTrace);
+      throw MurmurationException(
+        'Failed to handle function call',
+        code: ErrorCode.functionError,
+        errorDetails: {
+          'function': functionCall.name,
+          'arguments': functionCall.arguments,
+        },
+        originalError: e,
         stackTrace: stackTrace,
       );
     }
   }
 
+  List<Map<String, dynamic>> _getFunctionDefinitions() {
+    return _functions.entries.map((entry) {
+      return {
+        'name': entry.key,
+        'description': 'Execute function ${entry.key}',
+        'parameters': {
+          'type': 'object',
+          'properties': {},
+          'required': [],
+        },
+      };
+    }).toList();
+  }
+
   void _handleError(dynamic error, StackTrace? stackTrace) {
-    if (error is MurmurationException) {
-      _logger.error(
-        'Agent execution failed',
-        error,
-        stackTrace,
-        {
-          'agentIndex': _currentIndex,
-          'totalAgents': _totalAgents,
-          'state': _state.toMap(),
-        },
-      );
-    } else {
-      _logger.error(
-        'Unexpected error during agent execution',
-        error,
-        stackTrace,
-        {
-          'agentIndex': _currentIndex,
-          'totalAgents': _totalAgents,
-          'state': _state.toMap(),
-        },
+    _logger.error('Agent error', error, stackTrace);
+    if (_onProgress != null) {
+      _onProgress!(
+        AgentProgress(
+          status: AgentStatus.error,
+          currentAgent: _currentIndex,
+          totalAgents: _totalAgents,
+          timestamp: DateTime.now(),
+          metadata: {'error': error.toString()},
+        ),
       );
     }
   }
 
   void _updateProgress(AgentStatus status) {
     if (_onProgress != null) {
-      _onProgress!(AgentProgress(
-        status: status,
-        currentAgent: _currentIndex,
-        totalAgents: _totalAgents,
-        timestamp: DateTime.now(),
-      ));
+      _onProgress!(
+        AgentProgress(
+          status: status,
+          currentAgent: _currentIndex,
+          totalAgents: _totalAgents,
+          timestamp: DateTime.now(),
+        ),
+      );
     }
+  }
+
+  String _getSystemPrompt() {
+    final buffer = StringBuffer();
+    buffer.writeln('You are an AI agent with the following tools:');
+    for (final tool in _tools) {
+      buffer.writeln('- ${tool.name}: ${tool.description}');
+    }
+    if (_outputSchema != null) {
+      buffer.writeln('\nYour output must conform to this schema:');
+      buffer.writeln(jsonEncode(_outputSchema!.fields));
+    }
+    return buffer.toString();
   }
 
   Future<void> dispose() async {
     if (_isDisposed) return;
-
     _isDisposed = true;
-    _tools.clear();
-    _functions.clear();
+    await _history.dispose();
+    _logger.info('Agent disposed');
   }
 }
 
@@ -344,7 +318,7 @@ class _AgentBuilder {
   final List<Tool> _tools = [];
   final Map<String, FunctionHandler> _functions = {};
   OutputSchema? _outputSchema;
-  int _currentIndex = 1;
+  int _currentIndex = 0;
   int _totalAgents = 1;
   ProgressCallback? _onProgress;
 
@@ -355,13 +329,44 @@ class _AgentBuilder {
     return this;
   }
 
-  _AgentBuilder withState(Map<String, dynamic> state) {
-    _state = ImmutableState(initialData: state);
+  _AgentBuilder withState(ImmutableState state) {
+    _state = state;
+    return this;
+  }
+
+  _AgentBuilder withStateMap(Map<String, dynamic> stateMap) {
+    _state = ImmutableState(initialData: stateMap);
     return this;
   }
 
   _AgentBuilder withHistory(MessageHistory history) {
     _history = history;
+    return this;
+  }
+
+  _AgentBuilder withTool(Tool tool) {
+    _tools.add(tool);
+    return this;
+  }
+
+  _AgentBuilder withFunction(String name, FunctionHandler handler) {
+    _functions[name] = handler;
+    return this;
+  }
+
+  _AgentBuilder withOutputSchema(OutputSchema schema) {
+    _outputSchema = schema;
+    return this;
+  }
+
+  _AgentBuilder withIndex(int currentIndex, int totalAgents) {
+    _currentIndex = currentIndex;
+    _totalAgents = totalAgents;
+    return this;
+  }
+
+  _AgentBuilder withProgressCallback(ProgressCallback callback) {
+    _onProgress = callback;
     return this;
   }
 
@@ -376,29 +381,26 @@ class _AgentBuilder {
     return this;
   }
 
-  _AgentBuilder withOutputSchema(OutputSchema schema) {
-    _outputSchema = schema;
-    return this;
-  }
-
   Future<Agent> build() async {
     if (_config == null) {
-      throw InvalidConfigurationException('Configuration is required');
+      throw InvalidConfigurationException(
+        'Configuration is required',
+        errorDetails: {'provider': LLMProvider.openai.name},
+      );
     }
-
     if (_state == null) {
-      throw InvalidConfigurationException('State is required');
+      throw InvalidConfigurationException(
+        'State is required',
+        errorDetails: {'provider': LLMProvider.openai.name},
+      );
     }
-
     if (_history == null) {
       _history = MessageHistory(
-        threadId: _config!.threadId ??
-            DateTime.now().millisecondsSinceEpoch.toString(),
+        threadId: _config!.threadId ?? DateTime.now().toIso8601String(),
         maxMessages: _config!.maxMessages,
         maxTokens: _config!.maxTokens,
       );
     }
-
     return Agent._internal(
       model: _model,
       config: _config!,

@@ -12,11 +12,13 @@ class ValidationResult<T> {
         isSuccess = true,
         errors = const [];
 
-  ValidationResult.failure(this.error, [this.stackTrace])
-      : value = null,
+  ValidationResult.failure(
+    this.error, {
+    this.stackTrace,
+    this.data,
+  })  : value = null,
         isSuccess = false,
-        errors = error != null ? [error] : const [],
-        data = null;
+        errors = error != null ? [error] : const [];
 
   bool get isValid => isSuccess;
 }

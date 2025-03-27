@@ -1,7 +1,7 @@
-import 'dart:convert';
 import 'dart:math';
 import 'package:http/http.dart' as http;
 import 'package:google_generative_ai/google_generative_ai.dart';
+import 'package:synchronized/synchronized.dart';
 import '../config/murmuration_config.dart';
 import '../messaging/message.dart';
 import '../exceptions.dart';
@@ -38,7 +38,6 @@ class GoogleClient {
     if (!modelName.startsWith('gemini-')) {
       throw InvalidConfigurationException(
         'Invalid model name for Google provider. Must start with "gemini-"',
-        details: {'model': modelName},
       );
     }
 
@@ -66,8 +65,7 @@ class GoogleClient {
       await _checkRateLimit('generateContent');
 
       final content = messages.map((m) {
-        final role = m.role == MessageRole.assistant ? 'model' : m.role.name;
-        return Content.text(m.content, role: role);
+        return Content.text(m.content);
       }).toList();
 
       final response = await _retryWithBackoff(
@@ -116,7 +114,7 @@ class GoogleClient {
       await _checkRateLimit('embedContent');
 
       final response = await _retryWithBackoff(
-        () => _model.embedContent(input),
+        () => _model.embedContent(Content.text(input)),
       );
 
       if (response.embedding == null) {

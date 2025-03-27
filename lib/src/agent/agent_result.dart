@@ -6,7 +6,7 @@ class AgentResult {
   final Stream<String>? stream;
   final DateTime timestamp;
 
-  const AgentResult({
+  AgentResult({
     required this.output,
     this.metadata,
     this.stream,

@@ -1,4 +1,3 @@
-import 'dart:async';
 import '../exceptions.dart';
 import '../logging/logger.dart';
 import 'tool.dart';
@@ -29,7 +28,7 @@ class ToolRegistry {
 
     _logger?.info(
       'Registered tool: ${tool.name}',
-      metadata: {
+      {
         'tool': tool.name,
         'tags': tool.tags,
         'requiresAuth': tool.requiresAuth,
@@ -60,11 +59,9 @@ class ToolRegistry {
 
     _logger?.info(
       'Registered chain: ${chain.name}',
-      metadata: {
+      {
         'chain': chain.name,
         'tools': chain.tools.map((t) => t.name).toList(),
-        'tags': chain.tags,
-        'requiresAuth': chain.requiresAuth,
       },
     );
   }
@@ -81,7 +78,7 @@ class ToolRegistry {
 
       _logger?.info(
         'Unregistered tool: $name',
-        metadata: {'tool': name},
+        {'tool': name},
       );
     }
 
@@ -96,7 +93,7 @@ class ToolRegistry {
 
       _logger?.info(
         'Unregistered chain: $name',
-        metadata: {'chain': name},
+        {'chain': name},
       );
     }
   }
@@ -106,7 +103,7 @@ class ToolRegistry {
     if (tool != null) {
       _logger?.debug(
         'Retrieved tool: $name',
-        metadata: {'tool': name},
+        {'tool': name},
       );
     }
     return tool;
@@ -117,7 +114,7 @@ class ToolRegistry {
     if (chain != null) {
       _logger?.debug(
         'Retrieved chain: $name',
-        metadata: {'chain': name},
+        {'chain': name},
       );
     }
     return chain;
@@ -127,7 +124,7 @@ class ToolRegistry {
     final tools = _taggedTools[tag] ?? {};
     _logger?.debug(
       'Retrieved tools by tag: $tag',
-      metadata: {
+      {
         'tag': tag,
         'count': tools.length,
         'tools': tools.map((t) => t.name).toList(),
@@ -140,7 +137,7 @@ class ToolRegistry {
     final chains = _taggedChains[tag] ?? {};
     _logger?.debug(
       'Retrieved chains by tag: $tag',
-      metadata: {
+      {
         'tag': tag,
         'count': chains.length,
         'chains': chains.map((c) => c.name).toList(),
@@ -153,7 +150,7 @@ class ToolRegistry {
     final tools = _tools.values.toList();
     _logger?.debug(
       'Retrieved all tools',
-      metadata: {'count': tools.length},
+      {'count': tools.length},
     );
     return tools;
   }
@@ -162,7 +159,7 @@ class ToolRegistry {
     final chains = _chains.values.toList();
     _logger?.debug(
       'Retrieved all chains',
-      metadata: {'count': chains.length},
+      {'count': chains.length},
     );
     return chains;
   }
@@ -171,7 +168,7 @@ class ToolRegistry {
     final tags = {..._taggedTools.keys, ..._taggedChains.keys};
     _logger?.debug(
       'Retrieved all tags',
-      metadata: {'count': tags.length, 'tags': tags.toList()},
+      {'count': tags.length, 'tags': tags.toList()},
     );
     return tags;
   }

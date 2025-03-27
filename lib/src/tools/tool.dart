@@ -2,6 +2,7 @@ import 'dart:async';
 import '../exceptions.dart';
 import '../schema/output_schema.dart';
 import '../schema/validation_result.dart';
+import 'dart:convert';
 
 class Tool {
   final String name;
@@ -130,7 +131,7 @@ class Tool {
     if (missingParams.isNotEmpty || invalidParams.isNotEmpty) {
       return ValidationResult.failure(
         'Parameter validation failed',
-        details: {
+        data: {
           if (missingParams.isNotEmpty) 'missingParams': missingParams,
           if (invalidParams.isNotEmpty) 'invalidParams': invalidParams,
         },
@@ -165,11 +166,21 @@ class Tool {
         return ValidationResult.success(output);
       }
 
-      final result = outputSchema!.validateAndConvert(output);
+      Map<String, dynamic> outputMap;
+      try {
+        outputMap = jsonDecode(output) as Map<String, dynamic>;
+      } catch (e) {
+        return ValidationResult.failure(
+          'Output validation error: Invalid JSON format',
+          data: {'output': output},
+        );
+      }
+
+      final result = outputSchema!.validateAndConvert(outputMap);
       if (!result.isSuccess) {
         return ValidationResult.failure(
           'Output validation failed',
-          details: {'error': result.error},
+          data: {'error': result.error},
         );
       }
 
@@ -177,7 +188,7 @@ class Tool {
     } catch (e) {
       return ValidationResult.failure(
         'Output validation error: $e',
-        details: {'output': output},
+        data: {'output': output},
       );
     }
   }

@@ -2,6 +2,7 @@ import 'package:flutter/foundation.dart';
 import 'dart:async';
 import 'dart:io';
 import 'package:path_provider/path_provider.dart';
+import 'package:synchronized/synchronized.dart';
 import '../exceptions.dart';
 
 enum LogLevel {
@@ -15,6 +16,7 @@ enum LogLevel {
   const LogLevel(this.value);
 
   bool operator >=(LogLevel other) => value >= other.value;
+  bool operator <(LogLevel other) => value < other.value;
 }
 
 class LogEntry {
@@ -64,7 +66,7 @@ class MurmurationLogger {
   final void Function(LogEntry) onLog;
   final void Function(LogEntry) onError;
   final List<LogEntry> _buffer = [];
-  final _lock = Lock();
+  final Lock _lock = Lock();
   Timer? _flushTimer;
   File? _logFile;
 
@@ -163,14 +165,8 @@ class MurmurationLogger {
     }
   }
 
-  void log(
-    String message, {
-    LogLevel level = LogLevel.info,
-    dynamic error,
-    StackTrace? stackTrace,
-    Map<String, dynamic>? context,
-  }) {
-    if (!enabled || level < minLevel) return;
+  void _log(LogLevel level, String message, [dynamic error, StackTrace? stackTrace, Map<String, dynamic>? metadata]) {
+    if (level < minLevel) return;
 
     final entry = LogEntry(
       timestamp: DateTime.now(),
@@ -178,7 +174,7 @@ class MurmurationLogger {
       message: message,
       error: error,
       stackTrace: stackTrace,
-      context: context,
+      context: metadata,
     );
 
     _buffer.add(entry);
@@ -187,40 +183,51 @@ class MurmurationLogger {
     if (level >= LogLevel.error) {
       onError(entry);
     }
+
+    if (kDebugMode) {
+      _writeToConsole(entry);
+    }
   }
 
-  void debug(String message, {Map<String, dynamic>? context}) {
-    log(message, level: LogLevel.debug, context: context);
+  void _writeToConsole(LogEntry entry) {
+    final formattedMessage = entry.toFormattedString();
+    switch (entry.level) {
+      case LogLevel.debug:
+        debugPrint(formattedMessage);
+        break;
+      case LogLevel.info:
+        debugPrint(formattedMessage);
+        break;
+      case LogLevel.warning:
+        debugPrint('WARNING: $formattedMessage');
+        break;
+      case LogLevel.error:
+        debugPrint('ERROR: $formattedMessage');
+        break;
+      case LogLevel.critical:
+        debugPrint('CRITICAL: $formattedMessage');
+        break;
+    }
   }
 
-  void info(String message, {Map<String, dynamic>? context}) {
-    log(message, level: LogLevel.info, context: context);
+  void debug(String message, [Map<String, dynamic>? metadata]) {
+    _log(LogLevel.debug, message, null, null, metadata);
   }
 
-  void warning(String message, {Map<String, dynamic>? context}) {
-    log(message, level: LogLevel.warning, context: context);
+  void info(String message, [Map<String, dynamic>? metadata]) {
+    _log(LogLevel.info, message, null, null, metadata);
   }
 
-  void error(String message,
-      [dynamic error, StackTrace? stackTrace, Map<String, dynamic>? context]) {
-    log(
-      message,
-      level: LogLevel.error,
-      error: error,
-      stackTrace: stackTrace,
-      context: context,
-    );
+  void warning(String message, [Map<String, dynamic>? metadata]) {
+    _log(LogLevel.warning, message, null, null, metadata);
   }
 
-  void critical(String message,
-      [dynamic error, StackTrace? stackTrace, Map<String, dynamic>? context]) {
-    log(
-      message,
-      level: LogLevel.critical,
-      error: error,
-      stackTrace: stackTrace,
-      context: context,
-    );
+  void error(String message, dynamic error, [StackTrace? stackTrace, Map<String, dynamic>? metadata]) {
+    _log(LogLevel.error, message, error, stackTrace, metadata);
+  }
+
+  void critical(String message, dynamic error, [StackTrace? stackTrace, Map<String, dynamic>? metadata]) {
+    _log(LogLevel.critical, message, error, stackTrace, metadata);
   }
 
   Future<void> dispose() async {

@@ -44,7 +44,40 @@ enum ErrorCode {
   stateError(7000),
   invalidState(7001),
   concurrentModification(7002),
-  stateCorrupted(7003);
+  stateCorrupted(7003),
+
+  // Newly added errors
+  invalidResponse(1005),
+  tokenLimitExceeded(1006),
+  invalidConfiguration(2005),
+  invalidOutput(1007),
+  invalidFunction(1008),
+  invalidTool(1009),
+  invalidMessage(1010),
+  invalidHistory(1011),
+  invalidFormat(1012),
+  authorizationError(4004),
+  resourceConflict(5004),
+  internalError(5005),
+  externalError(5006),
+  userError(5007),
+  systemError(5008),
+  inputError(1013),
+  outputError(1014),
+  functionError(1015),
+  toolError(1016),
+  messageError(1017),
+  historyError(1018),
+  schemaError(6004),
+  formatError(1019),
+  providerError(2006),
+  modelError(2007),
+  apiKeyError(2008),
+  requestError(1020),
+  responseError(1021),
+  timeoutError(1022),
+  serverError(3005),
+  clientError(3006);
 
   final int code;
   const ErrorCode(this.code);
@@ -113,8 +146,17 @@ class ModelNotSupportedException extends MurmurationException {
 }
 
 class InvalidConfigurationException extends MurmurationException {
-  InvalidConfigurationException(String message)
-      : super(message, code: ErrorCode.invalidConfig);
+  InvalidConfigurationException(
+    String message, {
+    ErrorCode code = ErrorCode.invalidConfig,
+    Map<String, dynamic>? errorDetails,
+    StackTrace? stackTrace,
+  }) : super(
+          message,
+          code: code,
+          errorDetails: errorDetails,
+          stackTrace: stackTrace,
+        );
 }
 
 class RateLimitException extends MurmurationException {
@@ -174,15 +216,19 @@ class NetworkException extends MurmurationException {
 }
 
 class ValidationException extends MurmurationException {
-  ValidationException(String message, {Map<String, dynamic>? errorDetails})
-      : super(message,
-            code: ErrorCode.validationError,
-            errorDetails: errorDetails,
-            recoverySteps: [
-              'Review the input data format',
-              'Check for required fields',
-              'Validate data against the schema'
-            ]);
+  ValidationException(
+    String message, {
+    ErrorCode code = ErrorCode.validationError,
+    Map<String, dynamic>? errorDetails,
+    dynamic originalError,
+    StackTrace? stackTrace,
+  }) : super(
+    message,
+    code: code,
+    errorDetails: errorDetails,
+    originalError: originalError,
+    stackTrace: stackTrace,
+  );
 }
 
 class StateException extends MurmurationException {

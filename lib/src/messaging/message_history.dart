@@ -71,9 +71,14 @@ class MessageHistory {
         _lastAccessed = DateTime.now();
       } catch (e, stackTrace) {
         _error = 'Failed to add message: $e';
-        throw ResourceException(
+        throw MurmurationException(
           'Failed to add message',
-          errorDetails: {'error': e.toString()},
+          code: ErrorCode.messageError,
+          errorDetails: {
+            'error': e.toString(),
+            'threadId': threadId,
+            'messageCount': _messages.length,
+          },
           stackTrace: stackTrace,
         );
       }
@@ -107,8 +112,9 @@ class MessageHistory {
         }
       } catch (e, stackTrace) {
         _error = 'Failed to load messages: $e';
-        throw ResourceException(
+        throw MurmurationException(
           'Failed to load messages',
+          code: ErrorCode.resourceError,
           errorDetails: {'error': e.toString()},
           stackTrace: stackTrace,
         );
@@ -134,11 +140,14 @@ class MessageHistory {
 
         // Check storage size
         if (encoded.length > _maxStorageSize) {
-          throw ResourceException(
+          throw MurmurationException(
             'Message history exceeds maximum storage size',
+            code: ErrorCode.storageFull,
             errorDetails: {
               'size': encoded.length,
               'maxSize': _maxStorageSize,
+              'threadId': threadId,
+              'messageCount': _messages.length,
             },
           );
         }
@@ -146,9 +155,14 @@ class MessageHistory {
         await prefs.setString(key, encoded);
       } catch (e, stackTrace) {
         _error = 'Failed to save messages: $e';
-        throw ResourceException(
+        throw MurmurationException(
           'Failed to save messages',
-          errorDetails: {'error': e.toString()},
+          code: ErrorCode.messageError,
+          errorDetails: {
+            'error': e.toString(),
+            'threadId': threadId,
+            'messageCount': _messages.length,
+          },
           stackTrace: stackTrace,
         );
       } finally {
@@ -170,8 +184,9 @@ class MessageHistory {
         });
       } catch (e, stackTrace) {
         _error = 'Failed to clear messages: $e';
-        throw ResourceException(
+        throw MurmurationException(
           'Failed to clear messages',
+          code: ErrorCode.resourceError,
           errorDetails: {'error': e.toString()},
           stackTrace: stackTrace,
         );
