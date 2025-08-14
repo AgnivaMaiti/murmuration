@@ -5,6 +5,24 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Unreleased]
+
+### Added
+- New state management with `state_synchronizer.dart`
+- Enhanced caching system in `lib/src/cache/`
+- Example implementation in `example.dart`
+- Environment variable template (`.env.example`)
+
+## [3.1.0] - 2025-08-14
+
+### Added
+- Full support for Anthropic Claude models (Opus, Sonnet, Haiku)
+- Comprehensive API key handling documentation
+- Example code for secure API key management in Flutter/Android
+- Environment variable support for API keys in non-Android contexts
+- Rate limiting and error handling for Anthropic API
+- Documentation for multi-provider usage patterns
+
 ## [3.0.0] - 2025-03-27
 
 ### Added

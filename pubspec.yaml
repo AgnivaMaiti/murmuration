@@ -1,31 +1,58 @@
 name: murmuration
-description: A powerful and flexible AI agent framework for building intelligent applications with support for multiple LLM providers and tool chaining.
-version: 3.0.0
-homepage: https://github.com/yourusername/murmuration
+description: A powerful and flexible AI agent framework for building intelligent applications with support for multiple LLM providers (OpenAI, Anthropic, Google) and tool chaining.
+version: 3.1.0
+homepage: https://github.com/AgnivaMaiti/murmuration
+repository: https://github.com/AgnivaMaiti/murmuration.git
+documentation: https://github.com/AgnivaMaiti/murmuration#readme
+publish_to: 'https://pub.dev'
 
 environment:
-  sdk: '>=3.0.0 <4.0.0'
+  sdk: ">=3.0.0 <4.0.0"
   flutter: ">=3.0.0"
 
 dependencies:
   flutter:
     sdk: flutter
-  google_generative_ai: ^0.2.0
-  http: ^1.1.0
-  shared_preferences: ^2.2.0
-  synchronized: ^3.1.0
-  path_provider: ^2.1.0
-  intl: ^0.18.0
-  json_annotation: ^4.8.1
+  
+  # Core dependencies
+  google_generative_ai: ^0.2.0  # For Google Gemini integration
+  http: ^1.1.0                  # For HTTP requests
+  shared_preferences: ^2.2.0    # For local storage
+  synchronized: ^3.1.0          # For thread safety
+  path_provider: ^2.1.0         # For file system access
+  intl: ^0.18.0                # For internationalization
+  json_annotation: ^4.8.1       # For JSON serialization
+  anthropic_dart: ^0.8.0        # For Anthropic Claude integration
+  logger: ^2.0.0               # For structured logging
+  uuid: ^4.0.0                 # For generating unique IDs
+  meta: ^1.10.0                # For annotations
+  collection: ^1.18.0          # For collection utilities
 
 dev_dependencies:
   flutter_test:
     sdk: flutter
-  flutter_lints: ^2.0.0
-  test: ^1.24.0
-  build_runner: ^2.4.6
-  json_serializable: ^6.7.1
-  mockito: ^5.4.2
+  flutter_lints: ^2.0.0         # For linting
+  test: ^1.24.0                 # For testing
+  build_runner: ^2.4.6          # For code generation
+  json_serializable: ^6.7.1     # For JSON serialization
+  mockito: ^5.4.2               # For mocking in tests
+  flutter_dotenv: ^5.1.0        # For environment variable loading in examples
+  pedantic_mono: ^5.0.0         # For additional lint rules
+  test_coverage: ^0.5.0        # For test coverage reports
+  very_good_analysis: ^5.1.0   # For additional analysis options
 
 flutter:
   uses-material-design: true
+  assets:
+    - assets/
+
+# Prevent publishing of test and example files
+publish_to: none
+
+# Platform-specific settings
+web:
+  # Add web-specific settings here
+  
+environment:
+  sdk: '>=3.0.0 <4.0.0'
+  flutter: '>=3.0.0'

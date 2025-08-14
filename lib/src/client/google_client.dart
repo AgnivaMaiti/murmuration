@@ -54,12 +54,14 @@ class GoogleClient {
     );
   }
 
+  /// Google Gemini does not support functions or function_call parameters.
+  /// This method ignores them to maintain compatibility with the Agent interface.
   Future<Map<String, dynamic>> chatCompletion({
     required List<Message> messages,
     bool? stream,
     Map<String, dynamic>? overrideParameters,
-    Map<String, dynamic>? functions,
-    String? functionCall,
+    Map<String, dynamic>? functions, // ignored
+    String? functionCall, // ignored
   }) async {
     try {
       await _checkRateLimit('generateContent');

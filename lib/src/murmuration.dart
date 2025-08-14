@@ -3,6 +3,8 @@ import 'package:synchronized/synchronized.dart';
 import 'dart:async';
 import '../../murmuration.dart';
 import 'client/openai_client.dart';
+import 'client/google_client.dart';
+import 'client/anthropic_client.dart';
 import 'exceptions.dart';
 import 'agent/agent.dart';
 import 'messaging/message_history.dart';
@@ -20,12 +22,11 @@ class Murmuration {
   static dynamic _initializeModel(MurmurationConfig config) {
     switch (config.provider) {
       case LLMProvider.google:
-        return GenerativeModel(
-          model: config.modelConfig.modelName,
-          apiKey: config.apiKey,
-        );
+        return GoogleClient(config);
       case LLMProvider.openai:
         return OpenAIClient(config);
+      case LLMProvider.anthropic:
+        return AnthropicClient(config);
       default:
         throw MurmurationException(
           'Unsupported LLM provider: ${config.provider}',
@@ -119,6 +120,10 @@ class Murmuration {
   void dispose() {
     if (_model is OpenAIClient) {
       (_model as OpenAIClient).dispose();
+    } else if (_model is GoogleClient) {
+      (_model as GoogleClient).dispose();
+    } else if (_model is AnthropicClient) {
+      (_model as AnthropicClient).dispose();
     }
   }
 }

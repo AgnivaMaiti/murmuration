@@ -1,23 +1,39 @@
 <!DOCTYPE html>
 <html lang="en">
-
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="Learn how to build a chatbot with Murmuration, Flutter, and LLM providers like Anthropic, OpenAI, and Google Gemini">
     <title>Building a Chatbot with Murmuration and Flutter 🐦✨</title>
-    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&family=Fira+Code&display=swap" rel="stylesheet">
     <style>
+        :root {
+            --primary: #0175C2;
+            --primary-dark: #02569B;
+            --secondary: #03DAC6;
+            --background: #1E1E1E;
+            --surface: #2D2D2D;
+            --error: #CF6679;
+            --on-primary: #FFFFFF;
+            --on-background: #E1E1E1;
+            --on-surface: #E1E1E1;
+            --code-bg: #2D2D2D;
+        }
+
         body {
             margin: 0;
             font-family: 'Roboto', sans-serif;
-            background: linear-gradient(to bottom, #0175C2, #1E1E1E);
-            color: #ECEFF1;
+            background: var(--background);
+            color: var(--on-background);
+            line-height: 1.6;
         }
 
         header {
-            background: #02569B;
-            padding: 20px;
+            background: var(--primary-dark);
+            padding: 2rem 1rem;
             text-align: center;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+        }
             box-shadow: 0px 4px 6px rgba(0, 0, 0, 0.2);
         }
 

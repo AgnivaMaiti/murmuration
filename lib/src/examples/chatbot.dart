@@ -1,7 +1,10 @@
-import 'package:flutter/material.dart'; // Importing Flutter material design package
-import 'package:murmuration/murmuration.dart'; // Importing the Murmuration package for chatbot functionality
-import 'package:shared_preferences/shared_preferences.dart'; // Importing shared_preferences for local storage
-import 'dart:convert'; // Importing dart:convert for JSON encoding/decoding
+import 'dart:async';
+import 'dart:convert';
+
+import 'package:flutter/material.dart';
+import 'package:flutter_dotenv/flutter_dotenv.dart';
+import 'package:murmuration/murmuration.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 void main() {
   runApp(
@@ -37,11 +40,20 @@ class _ChatScreenState extends State<ChatScreen> {
   final TextEditingController _controller =
       TextEditingController(); // Controller for the text input field
   final List<Message> _messages = []; // List to hold chat messages
-  Murmuration? _murmuration; // Agent for handling chatbot interactions
-  String _selectedLanguage = 'en'; // Default selected language
-  String _selectedProvider = 'google'; // Default provider
-  bool _isInitialized = false;
+  Murmuration? _murmuration;
+  String _selectedProvider = 'anthropic';
+  bool _isLoading = false;
   String? _error;
+  final List<Message> _messages = [];
+  final TextEditingController _textController = TextEditingController();
+  final ScrollController _scrollController = ScrollController();
+
+  // Available LLM providers
+  final Map<String, String> _providers = {
+    'anthropic': 'Anthropic (Claude)',
+    'openai': 'OpenAI (GPT)',
+    'google': 'Google (Gemini)',
+  };
 
   @override
   void initState() {
@@ -63,34 +75,97 @@ class _ChatScreenState extends State<ChatScreen> {
     }
   }
 
-  // Method to initialize the chatbot agent
+  // Initialize Murmuration with the selected provider
   Future<void> _initializeMurmuration() async {
-    final config = MurmurationConfig(
-      provider: _selectedProvider == 'google'
-          ? LLMProvider.google
-          : LLMProvider.openai,
-      apiKey: 'your-secure-api-key',
-      modelConfig: ModelConfig(
-        modelName: _selectedProvider == 'google' ? 'gemini-pro' : 'gpt-3.5-turbo',
-      ),
-    );
-
-    _murmuration = Murmuration(config);
-  }
-
-  // Method to load saved messages from shared preferences
-  Future<void> _loadMessages() async {
     try {
-      final prefs = await SharedPreferences
-          .getInstance(); // Getting instance of shared preferences
-      final savedMessages = prefs.getStringList('chat_history') ??
-          []; // Retrieving saved messages or an empty list
+      setState(() => _isLoading = true);
+
+      final apiKey = _getApiKeyForProvider(_selectedProvider);
+      if (apiKey == null) {
+        throw Exception('API key not found for $_selectedProvider');
+      }
+
+      final config = MurmurationConfig(
+        provider: _getProviderFromString(_selectedProvider),
+        apiKey: apiKey,
+        modelConfig: ModelConfig(
+          modelName: _getModelForProvider(_selectedProvider),
+          temperature: 0.7,
+          maxTokens: 1000,
+        ),
+        cacheConfig: CacheConfig(
+          enabled: true,
+          ttl: const Duration(hours: 1),
+        ),
+      );
+
+      _murmuration = Murmuration(config);
+      await _loadMessages();
+
+      if (mounted) {
+        setState(() => _isLoading = false);
+      }
+    } catch (e) {
       if (mounted) {
         setState(() {
-          _messages.addAll(savedMessages
-              .map((msg) => Message.fromJson(msg))
-              .toList()); // Adding loaded messages to the state
+          _error = 'Failed to initialize: $e';
+          _isLoading = false;
         });
+      }
+    }
+  }
+
+  String? _getApiKeyForProvider(String provider) {
+    switch (provider) {
+      case 'anthropic':
+        return dotenv.env['ANTHROPIC_API_KEY'];
+      case 'openai':
+        return dotenv.env['OPENAI_API_KEY'];
+      case 'google':
+        return dotenv.env['GEMINI_API_KEY'];
+      default:
+        return null;
+    }
+  }
+
+  LLMProvider _getProviderFromString(String provider) {
+    switch (provider) {
+      case 'anthropic':
+        return LLMProvider.anthropic;
+      case 'openai':
+        return LLMProvider.openai;
+      case 'google':
+        return LLMProvider.google;
+      default:
+        return LLMProvider.anthropic;
+    }
+  }
+
+  String _getModelForProvider(String provider) {
+    switch (provider) {
+      case 'anthropic':
+        return 'claude-3-sonnet-20240229';
+      case 'openai':
+        return 'gpt-4-turbo';
+      case 'google':
+        return 'gemini-pro';
+      default:
+        return 'claude-3-sonnet-20240229';
+    }
+  }
+
+  // Load chat history from shared preferences
+  Future<void> _loadMessages() async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      final savedMessages = prefs.getStringList('chat_history') ?? [];
+
+      if (mounted) {
+        setState(() {
+          _messages.clear();
+          _messages.addAll(savedMessages.map((msg) => Message.fromJson(msg)));
+        });
+        _scrollToBottom();
       }
     } catch (e) {
       if (mounted) {
@@ -99,46 +174,48 @@ class _ChatScreenState extends State<ChatScreen> {
     }
   }
 
-  // Method to save a message to shared preferences
-  Future<void> _saveMessage(Message message) async {
+  // Save messages to shared preferences
+  Future<void> _saveMessages() async {
     try {
-      final prefs = await SharedPreferences
-          .getInstance(); // Getting instance of shared preferences
-      final savedMessages = prefs.getStringList('chat_history') ??
-          []; // Retrieving saved messages or an empty list
-      savedMessages.add(message.toJson()); // Adding the new message to the list
-      await prefs.setStringList('chat_history',
-          savedMessages); // Saving the updated list back to shared preferences
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.setStringList(
+        'chat_history',
+        _messages.map((msg) => msg.toJson()).toList(),
+      );
     } catch (e) {
       if (mounted) {
-        setState(() => _error = 'Failed to save message: $e');
+        setState(() => _error = 'Failed to save messages: $e');
       }
     }
   }
 
-  // Method to send a message
+  // Handle sending a message
   Future<void> _sendMessage() async {
-    if (_controller.text.isEmpty || _murmuration == null) return;
+    final text = _textController.text.trim();
+    if (text.isEmpty || _murmuration == null) return;
 
-    final userMessage = Message(
-        role: 'user',
-        content: _controller.text.trim()); // Creating a user message
+    final message = Message(
+      id: DateTime.now().millisecondsSinceEpoch.toString(),
+      text: text,
+      isUser: true,
+      timestamp: DateTime.now(),
+    );
 
     setState(() {
-      _messages.add(userMessage); // Adding user message to the list
-      _error = null;
+      _messages.add(message);
+      _textController.clear();
     });
-    _controller.clear(); // Clearing the input field
+
+    _scrollToBottom();
+    await _saveMessages();
 
     try {
-      await _saveMessage(userMessage); // Saving the user message
-
       final agent = await _murmuration!.createAgent({
         'role': 'Assistant',
         'language': _selectedLanguage,
       });
 
-      final result = await agent.execute(userMessage.content);
+      final result = await agent.execute(text);
 
       if (result.stream != null) {
         String assistantResponse = '';
@@ -146,34 +223,63 @@ class _ChatScreenState extends State<ChatScreen> {
           assistantResponse += chunk;
           if (mounted) {
             setState(() {
-              if (_messages.last.role == 'assistant') {
+              if (_messages.last.isUser) {
                 _messages.last =
-                    Message(role: 'assistant', content: assistantResponse);
+                    Message.fromJson(jsonEncode({
+                  'id': _messages.last.id,
+                  'text': assistantResponse,
+                  'isUser': false,
+                  'timestamp': _messages.last.timestamp,
+                }));
               } else {
                 _messages.add(
-                    Message(role: 'assistant', content: assistantResponse));
+                    Message.fromJson(jsonEncode({
+                  'id': DateTime.now().millisecondsSinceEpoch.toString(),
+                  'text': assistantResponse,
+                  'isUser': false,
+                  'timestamp': DateTime.now(),
+                })));
               }
             });
           }
         }
-        await _saveMessage(
-            Message(role: 'assistant', content: assistantResponse));
+        await _saveMessages();
       } else {
-        final assistantMessage = Message(
-            role: 'assistant',
-            content: result.output
-                .trim()); // Creating an assistant message from the response
+        final assistantMessage = Message.fromJson(jsonEncode({
+          'id': DateTime.now().millisecondsSinceEpoch.toString(),
+          'text': result.output.trim(),
+          'isUser': false,
+          'timestamp': DateTime.now(),
+        }));
 
         if (mounted) {
           setState(() => _messages.add(assistantMessage));
         }
-        await _saveMessage(assistantMessage); // Saving the assistant message
+        await _saveMessages();
       }
     } catch (e) {
-      if (mounted) {
-        setState(() => _error = 'Error: $e');
-      }
+      setState(() {
+        _error = 'Error generating response: $e';
+        _messages.removeLast(); // Remove the bot's message if there was an error
+      });
     }
+  }
+
+  void _scrollToBottom() {
+    if (_scrollController.hasClients) {
+      _scrollController.animateTo(
+        _scrollController.position.maxScrollExtent,
+        duration: const Duration(milliseconds: 300),
+        curve: Curves.easeOut,
+      );
+    }
+  }
+
+  void _changeProvider(String? provider) {
+    if (provider == null || provider == _selectedProvider) return;
+
+    setState(() => _selectedProvider = provider);
+    _initializeMurmuration();
   }
 
   @override
@@ -186,173 +292,230 @@ class _ChatScreenState extends State<ChatScreen> {
 
     return Scaffold(
       appBar: AppBar(
-        title: Text('Murmuration Chatbot'), // Title of the app bar
+        title: const Text('Murmuration Chatbot'),
         actions: [
           // Provider selection dropdown
-          DropdownButton<String>(
-            value: _selectedProvider,
-            items: const [
-              DropdownMenuItem(value: 'google', child: Text('Google')),
-              DropdownMenuItem(value: 'openai', child: Text('OpenAI')),
-            ],
-            onChanged: (String? newValue) async {
-              if (newValue != null) {
-                setState(() => _selectedProvider = newValue);
-                await _initializeMurmuration();
-              }
-            },
-          ),
-          const SizedBox(width: 16),
-          // Language selection dropdown
-          DropdownButton<String>(
-            value: _selectedLanguage,
-            items: const [
-              DropdownMenuItem(value: 'en', child: Text('English')),
-              DropdownMenuItem(value: 'es', child: Text('Spanish')),
-              DropdownMenuItem(value: 'fr', child: Text('French')),
-              DropdownMenuItem(value: 'de', child: Text('German')),
-            ],
-            onChanged: (String? newValue) {
-              if (newValue != null) {
-                setState(() => _selectedLanguage = newValue);
-              }
-            },
+          Padding(
+            padding: const EdgeInsets.only(right: 16.0),
+            child: DropdownButton<String>(
+              value: _selectedProvider,
+              items: _providers.entries.map((entry) {
+                return DropdownMenuItem(
+                  value: entry.key,
+                  child: Text(entry.value),
+                );
+              }).toList(),
+              onChanged: _changeProvider,
+              underline: const SizedBox(),
+              dropdownColor: Theme.of(context).cardColor,
+            ),
           ),
         ],
       ),
       body: Column(
         children: [
+          // Error banner
           if (_error != null)
             Container(
-              color: Colors.red[100],
               padding: const EdgeInsets.all(8.0),
-              child: Text(
-                _error!,
-                style: const TextStyle(color: Colors.red),
+              color: Colors.red[100],
+              child: Row(
+                children: [
+                  const Icon(Icons.error_outline, color: Colors.red),
+                  const SizedBox(width: 8.0),
+                  Expanded(child: Text(_error!)),
+                  IconButton(
+                    icon: const Icon(Icons.close, size: 20),
+                    onPressed: () => setState(() => _error = null),
+                  ),
+                ],
               ),
             ),
-          Expanded(
-            child: ListView.builder(
-              padding: const EdgeInsets.all(8.0), // Padding for the list view
-              itemCount: _messages.length, // Number of messages to display
-              itemBuilder: (context, index) {
-                final message = _messages[
-                    index]; // Getting the message at the current index
-                return _buildMessageTile(message); // Building the message tile
-              },
-            ),
-          ),
-          _buildInputField(), // Building the input field for new messages
-        ],
-      ),
-    );
-  }
 
-  // Method to build a message tile
-  Widget _buildMessageTile(Message message) {
-    final isUserMessage =
-        message.role == 'user'; // Check if the message is from the user
-    return Container(
-      margin: const EdgeInsets.symmetric(
-          vertical: 4.0), // Vertical margin for the message container
-      padding:
-          const EdgeInsets.all(10.0), // Padding inside the message container
-      decoration: BoxDecoration(
-        color: isUserMessage
-            ? Colors.blue[100]
-            : Colors.grey[200], // Background color based on message role
-        borderRadius: BorderRadius.circular(
-            8.0), // Rounded corners for the message container
-      ),
-      alignment: isUserMessage
-          ? Alignment.centerRight
-          : Alignment.centerLeft, // Aligning the message based on the role
-      child: Column(
-        crossAxisAlignment: isUserMessage
-            ? CrossAxisAlignment.end
-            : CrossAxisAlignment.start, // Aligning text based on message role
-        children: [
-          Text(
-            message.role, // Displaying the role of the message
-            style: TextStyle(
-              fontWeight: FontWeight.bold, // Bold text for the role
-              color: isUserMessage
-                  ? Colors.blue
-                  : Colors.black, // Color based on message role
-            ),
-          ),
-          SizedBox(height: 4.0), // Space between role and content
-          Text(
-            message.content, // Displaying the content of the message
-            style:
-                TextStyle(fontSize: 16.0), // Font size for the message content
-          ),
-        ],
-      ),
-    );
-  }
-
-  // Method to build the input field for sending messages
-  Widget _buildInputField() {
-    return Padding(
-      padding: const EdgeInsets.all(8.0), // Padding around the input field
-      child: Row(
-        children: [
+          // Chat messages
           Expanded(
-            child: TextField(
-              controller: _controller, // Controller for the text field
-              decoration: InputDecoration(
-                hintText: 'Type your message...', // Placeholder text
-                border: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(
-                      30.0), // Rounded border for the input field
-                  borderSide: BorderSide(color: Colors.blue), // Border color
+            child: _isLoading && _messages.isEmpty
+                ? const Center(child: CircularProgressIndicator())
+                : ListView.builder(
+                    controller: _scrollController,
+                    padding: const EdgeInsets.all(8.0),
+                    itemCount: _messages.length,
+                    itemBuilder: (context, index) {
+                      final message = _messages[index];
+                      return _buildMessageBubble(message);
+                    },
+                  ),
+          ),
+
+          // Input area
+          Container(
+            padding: const EdgeInsets.all(8.0),
+            decoration: BoxDecoration(
+              color: Theme.of(context).cardColor,
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.black.withOpacity(0.1),
+                  blurRadius: 4.0,
+                  offset: const Offset(0, -2),
                 ),
-                filled: true, // Fill the background
-                fillColor: Colors.white, // Background color of the input field
-              ),
+              ],
             ),
-          ),
-          const SizedBox(
-              width: 8.0), // Space between text field and send button
-          IconButton(
-            icon:
-                const Icon(Icons.send, color: Colors.blue), // Send button icon
-            onPressed: _sendMessage, // Action to perform on button press
+            child: Row(
+              children: [
+                // Message input
+                Expanded(
+                  child: TextField(
+                    controller: _textController,
+                    decoration: const InputDecoration(
+                      hintText: 'Type a message...',
+                      border: InputBorder.none,
+                      contentPadding: EdgeInsets.symmetric(horizontal: 16.0),
+                    ),
+                    maxLines: null,
+                    textInputAction: TextInputAction.send,
+                    onSubmitted: (_) => _sendMessage(),
+                  ),
+                ),
+
+                // Send button
+                IconButton(
+                  icon: const Icon(Icons.send),
+                  onPressed: _sendMessage,
+                  tooltip: 'Send message',
+                ),
+              ],
+            ),
           ),
         ],
       ),
     );
   }
 
-  @override
-  void dispose() {
-    _controller.dispose();
-    _murmuration?.dispose();
-    super.dispose();
+  Widget _buildMessageBubble(Message message) {
+    final isUser = message.isUser;
+    final theme = Theme.of(context);
+
+    return Container(
+      margin: const EdgeInsets.symmetric(vertical: 4.0, horizontal: 8.0),
+      child: Row(
+        mainAxisAlignment: isUser ? MainAxisAlignment.end : MainAxisAlignment.start,
+        children: [
+          if (!isUser) ...[
+            const CircleAvatar(
+              child: Icon(Icons.smart_toy, size: 16.0),
+            ),
+            const SizedBox(width: 8.0),
+          ],
+
+          Flexible(
+            child: Container(
+              padding: const EdgeInsets.symmetric(
+                vertical: 10.0,
+                horizontal: 14.0,
+              ),
+              decoration: BoxDecoration(
+                color: isUser
+                    ? theme.colorScheme.primary
+                    : theme.colorScheme.surfaceVariant,
+                borderRadius: BorderRadius.circular(20.0),
+                boxShadow: [
+                  if (!isUser)
+                    BoxShadow(
+                      color: Colors.black.withOpacity(0.1),
+                      blurRadius: 2.0,
+                      offset: const Offset(0, 1),
+                    ),
+                ],
+              ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  SelectableText(
+                    message.text,
+                    style: TextStyle(
+                      color: isUser
+                          ? theme.colorScheme.onPrimary
+                          : theme.colorScheme.onSurfaceVariant,
+                    ),
+                  ),
+
+                  if (message.metadata != null && !isUser) ...[
+                    const SizedBox(height: 4.0),
+                    Text(
+                      'Model: ${message.metadata!['model'] ?? 'N/A'} • '
+                      'Tokens: ${message.metadata!['tokens'] ?? 'N/A'}',
+                      style: theme.textTheme.bodySmall?.copyWith(
+                        color: (isUser
+                                ? theme.colorScheme.onPrimary
+                                : theme.colorScheme.onSurfaceVariant)
+                            ?.withOpacity(0.7),
+                      ),
+                    ),
+                  ],
+                ],
+              ),
+            ),
+          ),
+
+          if (isUser) ...[
+            const SizedBox(width: 8.0),
+            CircleAvatar(
+              child: Text(
+                'U',
+                style: theme.textTheme.bodySmall?.copyWith(
+                  color: theme.colorScheme.onPrimary,
+                ),
+              ),
+              backgroundColor: theme.colorScheme.primary,
+              radius: 12.0,
+            ),
+          ],
+        ],
+      ),
+    );
   }
 }
 
 // Message class to represent a chat message
 class Message {
-  final String role; // Role of the message sender (user or assistant)
-  final String content; // Content of the message
+  final String id;
+  String text;
+  final bool isUser;
+  final DateTime timestamp;
+  Map<String, dynamic>? metadata;
 
-  const Message(
-      {required this.role, required this.content}); // Constructor for Message
+  Message({
+    required this.id,
+    required this.text,
+    required this.isUser,
+    required this.timestamp,
+    this.metadata,
+  });
 
-  // Method to convert Message to JSON string
   String toJson() => jsonEncode({
-        'role': role,
-        'content': content,
+        'id': id,
+        'text': text,
+        'isUser': isUser,
+        'timestamp': timestamp.toIso8601String(),
+        'metadata': metadata,
       });
 
-  // Static method to create a Message from a JSON string
-  static Message fromJson(String json) {
+  Map<String, dynamic> toMap() => {
+        'id': id,
+        'text': text,
+        'isUser': isUser,
+        'timestamp': timestamp.toIso8601String(),
+        'metadata': metadata,
+      };
+
+  factory Message.fromJson(String json) {
     final data = jsonDecode(json);
     return Message(
-      role: data['role'],
-      content: data['content'],
+      id: data['id'] ?? '',
+      text: data['text'] ?? '',
+      isUser: data['isUser'] ?? false,
+      timestamp: DateTime.parse(data['timestamp'] ?? DateTime.now().toIso8601String()),
+      metadata: data['metadata'] is Map ? Map<String, dynamic>.from(data['metadata']) : null,
     );
   }
 }

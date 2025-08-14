@@ -159,13 +159,38 @@ class Agent {
 
   Future<Map<String, dynamic>> _getModelResponse(List<Message> messages) async {
     try {
-      final response = await _model.chatCompletion(
-        messages: messages,
-        stream: _config.stream,
-        functions: _getFunctionDefinitions(),
-      );
-      _logger.debug('Got model response');
-      return response;
+      switch (_config.provider) {
+        case LLMProvider.openai:
+          // OpenAI expects functions as Map<String, dynamic>?
+          final functions = _getFunctionDefinitions();
+          Map<String, dynamic>? functionsMap;
+          if (functions.isNotEmpty) {
+            functionsMap = {'functions': functions};
+          }
+          final response = await _model.chatCompletion(
+            messages: messages,
+            stream: _config.stream,
+            functions: functionsMap?['functions'],
+          );
+          _logger.debug('Got OpenAI model response');
+          return response;
+        case LLMProvider.google:
+          // Google expects only messages
+          final response = await _model.chatCompletion(
+            messages: messages,
+            stream: _config.stream,
+          );
+          _logger.debug('Got Gemini model response');
+          return response;
+        case LLMProvider.custom:
+          // Add custom provider logic here
+          throw UnimplementedError('Custom provider is not implemented');
+        default:
+          throw MurmurationException(
+            'Unsupported provider: [1m${_config.provider}[0m',
+            code: ErrorCode.invalidProvider,
+          );
+      }
     } catch (e, stackTrace) {
       _logger.error('Failed to get model response', e, stackTrace);
       throw MurmurationException(

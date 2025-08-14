@@ -1,6 +1,9 @@
-import 'package:flutter/material.dart'; // Importing Flutter's material design package
-import 'package:murmuration/murmuration.dart'; // Importing Murmuration package for AI functionalities
-import 'dart:convert'; // Importing dart:convert for JSON encoding/decoding
+import 'dart:async';
+import 'dart:convert';
+
+import 'package:flutter/material.dart';
+import 'package:flutter_dotenv/flutter_dotenv.dart';
+import 'package:murmuration/murmuration.dart';
 
 void main() {
   WidgetsFlutterBinding
@@ -27,19 +30,27 @@ class MurmurationTextClassifier extends StatelessWidget {
 
 // Class for handling text classification using Murmuration
 class TextClassifier {
-  final Murmuration _murmuration; // Instance of Murmuration for AI interactions
-  static const String _threadId =
-      'text_classification'; // Thread ID for classification tasks
+  final Murmuration _murmuration;
+  static const String _threadId = 'text_classification';
+  final String _provider;
+  
+  // Cache for classification results
+  final Map<String, Map<String, dynamic>> _cache = {};
 
-  // Constructor for TextClassifier, initializes Murmuration with API key and settings
-  TextClassifier(String apiKey, {String provider = 'google'})
-      : _murmuration = Murmuration(
+  TextClassifier(String apiKey, {String provider = 'anthropic'})
+      : _provider = provider,
+        _murmuration = Murmuration(
           MurmurationConfig(
-            provider:
-                provider == 'google' ? LLMProvider.google : LLMProvider.openai,
+            provider: _getProviderFromString(provider),
             apiKey: apiKey,
             modelConfig: ModelConfig(
-              modelName: provider == 'google' ? 'gemini-pro' : 'gpt-3.5-turbo',
+              modelName: _getModelForProvider(provider),
+              temperature: 0.2, // Lower temperature for more consistent classifications
+              maxTokens: 1000,
+            ),
+            cacheConfig: const CacheConfig(
+              enabled: true,
+              ttl: Duration(hours: 1),
             ),
             debug: true,
             threadId: _threadId,
@@ -47,56 +58,167 @@ class TextClassifier {
             retryDelay: const Duration(seconds: 1),
           ),
         );
+        
+  static LLMProvider _getProviderFromString(String provider) {
+    switch (provider) {
+      case 'anthropic':
+        return LLMProvider.anthropic;
+      case 'openai':
+        return LLMProvider.openai;
+      case 'google':
+        return LLMProvider.google;
+      default:
+        return LLMProvider.anthropic;
+    }
+  }
+  
+  static String _getModelForProvider(String provider) {
+    switch (provider) {
+      case 'anthropic':
+        return 'claude-3-haiku-20240307';
+      case 'openai':
+        return 'gpt-4-turbo';
+      case 'google':
+        return 'gemini-pro';
+      default:
+        return 'claude-3-haiku-20240307';
+    }
+  }
 
-  // Method to classify the given text
-  Future<Map<String, dynamic>> classify(String text) async {
+  /// Classify text with streaming support
+  Stream<Map<String, dynamic>> classifyStream(String text) async* {
     if (text.isEmpty) {
-      throw Exception('Input text cannot be empty');
+      throw ArgumentError('Input text cannot be empty');
+    }
+    
+    // Check cache first
+    final cacheKey = '${_provider}_${text.hashCode}';
+    if (_cache.containsKey(cacheKey)) {
+      yield _cache[cacheKey]!;
+      return;
     }
 
     try {
-      // Creating an agent with a specific role for text classification
-      final agent = await _murmuration.createAgent({
-        'role':
-            '''You are a text classification expert. Analyze the given text and provide your analysis in this exact JSON format:
+      final agent = await _murmuration.createAgent(
+        systemPrompt: '''You are a text classification expert. Analyze the given text and provide your analysis in this exact JSON format:
 {
-  "sentiment": ["happy", "neutral", or "sad"],
+  "sentiment": ["positive", "neutral", or "negative"],
   "aggressiveness": [number between 1-5],
-  "language": ["spanish", "english", "french", "german", or "italian"]
+  "language": ["spanish", "english", "french", "german", or "italian"],
+  "key_phrases": ["list", "of", "key", "phrases"],
+  "confidence": [number between 0-1]
 }
 Important: Return ONLY the JSON object, no other text.''',
-      });
+      );
 
-      final result =
-          await agent.execute(text); // Executing the agent with the input text
-
-      final cleanOutput = _cleanJsonOutput(result.output);
-      final parsedOutput = json.decode(cleanOutput) as Map<String, dynamic>;
-
-      // Convert numeric strings to integers if needed
-      if (parsedOutput['aggressiveness'] is String) {
-        parsedOutput['aggressiveness'] = int.parse(parsedOutput[
-            'aggressiveness']); // Parsing aggressiveness to integer
+      String fullResponse = '';
+      final stream = agent.executeStream(text);
+      
+      await for (final chunk in stream) {
+        if (!chunk.isDone) {
+          fullResponse += chunk.content;
+          
+          // Try to parse the partial response
+          try {
+            final cleanOutput = _cleanJsonOutput(fullResponse);
+            final parsedOutput = json.decode(cleanOutput) as Map<String, dynamic>;
+            _processParsedOutput(parsedOutput);
+            _cache[cacheKey] = parsedOutput;
+            yield parsedOutput;
+          } catch (e) {
+            // Ignore parsing errors for partial responses
+          }
+        }
       }
-
-      return parsedOutput; // Returning the parsed output
+      
+      // Final parse to ensure we have valid output
+      final cleanOutput = _cleanJsonOutput(fullResponse);
+      final parsedOutput = json.decode(cleanOutput) as Map<String, dynamic>;
+      _processParsedOutput(parsedOutput);
+      _cache[cacheKey] = parsedOutput;
+      yield parsedOutput;
+      
     } catch (e) {
       if (e is FormatException) {
-        throw Exception(
-            'Failed to parse AI response: ${e.message}'); // Handling format exceptions
+        throw Exception('Failed to parse AI response: ${e.message}');
       }
-      throw Exception(
-          'Classification failed: $e'); // General classification failure
+      throw Exception('Classification failed: $e');
     }
+  }
+  
+  /// Classify text with a single response
+  Future<Map<String, dynamic>> classify(String text) async {
+    final stream = classifyStream(text);
+    Map<String, dynamic>? result;
+    
+    await for (final value in stream) {
+      result = value;
+    }
+    
+    return result ?? {
+      'sentiment': 'neutral',
+      'aggressiveness': 1,
+      'language': 'unknown',
+      'key_phrases': [],
+      'confidence': 0,
+    };
+  }
+  
+  void _processParsedOutput(Map<String, dynamic> output) {
+    // Ensure all required fields exist with defaults
+    output['sentiment'] ??= 'neutral';
+    
+    // Process aggressiveness (1-5)
+    if (output['aggressiveness'] is String) {
+      output['aggressiveness'] = int.tryParse(output['aggressiveness']) ?? 1;
+    }
+    output['aggressiveness'] = (output['aggressiveness'] as num? ?? 1)
+        .clamp(1, 5)
+        .toInt();
+        
+    // Ensure language is valid
+    const validLanguages = {'spanish', 'english', 'french', 'german', 'italian'};
+    if (!validLanguages.contains(output['language']?.toString().toLowerCase())) {
+      output['language'] = 'unknown';
+    }
+    
+    // Ensure key_phrases is a List<String>
+    if (output['key_phrases'] is! List) {
+      output['key_phrases'] = [];
+    } else {
+      output['key_phrases'] = (output['key_phrases'] as List)
+          .whereType<String>()
+          .toList();
+    }
+    
+    // Ensure confidence is a double between 0-1
+    if (output['confidence'] is String) {
+      output['confidence'] = double.tryParse(output['confidence']) ?? 0.5;
+    }
+    output['confidence'] = (output['confidence'] as num? ?? 0.5)
+        .clamp(0.0, 1.0)
+        .toDouble();
   }
 
   String _cleanJsonOutput(String output) {
     String cleanOutput = output.trim();
-    if (cleanOutput.startsWith('```json')) {
-      cleanOutput = cleanOutput.substring(7);
+    
+    // Remove code block markers
+    const jsonStartMarkers = ['```json', '```JSON', '```'];
+    for (final marker in jsonStartMarkers) {
+      if (cleanOutput.startsWith(marker)) {
+        cleanOutput = cleanOutput.substring(marker.length).trimLeft();
+        break;
+      }
     }
-    if (cleanOutput.startsWith('```')) {
-      cleanOutput = cleanOutput.substring(3);
+    
+    // Remove trailing code block markers
+    const jsonEndMarkers = ['```'];
+    for (final marker in jsonEndMarkers) {
+      if (cleanOutput.endsWith(marker)) {
+        cleanOutput = cleanOutput.substring(0, cleanOutput.length - marker.length).trimRight();
+        break;
+      }
     }
     if (cleanOutput.endsWith('```')) {
       cleanOutput = cleanOutput.substring(0, cleanOutput.length - 3);
@@ -227,133 +349,336 @@ class _ClassificationWidgetState extends State<ClassificationWidget> {
                   .colorScheme
                   .onErrorContainer, // Text color for error
             ),
-          ),
-        ),
-      );
-    }
-
-    if (_classification == null) {
-      return const SizedBox
-          .shrink(); // Return empty widget if no classification
-    }
-
     return Card(
-      elevation: 2, // Elevation for the card
-      child: Padding(
-        padding: const EdgeInsets.all(16),
-        child: Column(
-          crossAxisAlignment:
-              CrossAxisAlignment.start, // Aligning children to the start
-          children: [
-            Text(
-              'Classification Results', // Title for the results
-              style: Theme.of(context)
-                  .textTheme
-                  .titleLarge, // Styling for the title
-            ),
-            const SizedBox(height: 16), // Space between title and results
-            _buildResultRow(
-              icon: Icons.emoji_emotions,
-              label: 'Sentiment',
-              value: _classification!['sentiment'],
-              color: _getSentimentColor(_classification!['sentiment']),
-            ),
-            const SizedBox(
-                height: 8), // Space between sentiment and aggressiveness
-            _buildResultRow(
-              icon: Icons.speed,
-              label: 'Aggressiveness',
-              value: '${_classification!['aggressiveness']}/5',
-            ),
-            const SizedBox(
-                height: 8), // Space between aggressiveness and language
-            _buildResultRow(
-              icon: Icons.language,
-              label: 'Language',
-              value: _classification!['language'],
-            ),
-          ],
-        ),
+      child: AnimatedSwitcher(
+        duration: const Duration(milliseconds: 300),
+        child: _isLoading && _classification == null
+            ? const Padding(
+                padding: EdgeInsets.all(24.0),
+                child: Center(child: CircularProgressIndicator()),
+              )
+            : _error != null
+                ? _buildErrorCard()
+                : _classification == null
+                    ? _buildEmptyState()
+                    : _buildResultContent(),
       ),
     );
   }
 
-  Widget _buildResultRow({
-    required IconData icon,
-    required String label,
-    required String value,
-    Color? color,
-  }) {
-    return Row(
+  Widget _buildErrorCard() {
+    return ListTile(
+      leading: const Icon(Icons.error_outline, color: Colors.red),
+      title: const Text('Error', style: TextStyle(fontWeight: FontWeight.bold)),
+      subtitle: Text(_error ?? 'An unknown error occurred'),
+      trailing: IconButton(
+        icon: const Icon(Icons.close),
+        onPressed: () => setState(() => _error = null),
+      ),
+    );
+  }
+
+  Widget _buildEmptyState() {
+    return const Padding(
+      padding: EdgeInsets.all(24.0),
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          Icon(Icons.analytics, size: 64, color: Colors.grey),
+          SizedBox(height: 16),
+          Text(
+            'Enter text to analyze',
+            style: TextStyle(fontSize: 16, color: Colors.grey),
+          ),
+          Text(
+            'The AI will analyze sentiment, language, and more',
+            textAlign: TextAlign.center,
+            style: TextStyle(color: Colors.grey, fontSize: 12),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildResultContent() {
+    final confidence = _classification?['confidence'] as double? ?? 0.0;
+    final keyPhrases = _classification?['key_phrases'] as List<dynamic>? ?? [];
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Icon(icon, color: color),
-        const SizedBox(width: 8),
-        Text(
-          '$label: $value',
-          style: TextStyle(
-            fontWeight: FontWeight.bold,
-            color: color,
+        // Provider and confidence header
+        Padding(
+          padding: const EdgeInsets.all(16.0),
+          child: Row(
+            children: [
+              // Provider selector
+              DropdownButton<String>(
+                value: _selectedProvider,
+                items: const [
+                  DropdownMenuItem(value: 'google', child: Text('Google')),
+                  DropdownMenuItem(value: 'openai', child: Text('OpenAI')),
+                ],
+                onChanged: (String? newValue) {
+                  if (newValue != null) {
+                    setState(() {
+                      _selectedProvider = newValue;
+                      _initializeClassifier();
+                    });
+                  }
+                },
+                underline: const SizedBox(),
+                isDense: true,
+              ),
+              const Spacer(),
+              // Confidence indicator
+              if (confidence > 0)
+                Row(
+                  children: [
+                    Text(
+                      '${(confidence * 100).toStringAsFixed(0)}%',
+                      style: TextStyle(
+                        color: Colors.grey[600],
+                        fontSize: 12,
+                      ),
+                    ),
+                    const SizedBox(width: 4),
+                    Icon(
+                      confidence > 0.8
+                          ? Icons.verified
+                          : confidence > 0.5
+                              ? Icons.info_outline
+                              : Icons.warning_amber,
+                      size: 16,
+                      color: confidence > 0.8
+                          ? Colors.green
+                          : confidence > 0.5
+                              ? Colors.orange
+                              : Colors.red,
+                    ),
+                  ],
+                ),
+            ],
+          ),
+        ),
+
+        // Main result sections
+        _buildResultSection(
+          icon: Icons.sentiment_satisfied,
+          title: 'Sentiment',
+          value: _classification!['sentiment']?.toString().toUpperCase() ?? 'N/A',
+          color: _getSentimentColor(_classification!['sentiment']),
+        ),
+
+        _buildResultSection(
+          icon: Icons.whatshot,
+          title: 'Aggressiveness',
+          value: _buildAggressivenessIndicator(_classification!['aggressiveness'] as int? ?? 1),
+        ),
+
+        _buildResultSection(
+          icon: Icons.language,
+          title: 'Language',
+          value: _classification!['language']?.toString().toUpperCase() ?? 'N/A',
+        ),
+
+        // Key phrases section
+        if (keyPhrases.isNotEmpty) ...[
+          const Divider(),
+          Padding(
+            padding: const EdgeInsets.all(16.0),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const Text(
+                  'Key Phrases',
+                  style: TextStyle(
+                    fontWeight: FontWeight.bold,
+                    fontSize: 16,
+                  ),
+                ),
+                const SizedBox(height: 8),
+                Wrap(
+                  spacing: 8,
+                  runSpacing: 4,
+                  children: keyPhrases
+                      .take(10)
+                      .map((phrase) => Chip(
+                            label: Text(
+                              phrase.toString(),
+                              style: const TextStyle(fontSize: 12),
+                            ),
+                            backgroundColor: Colors.blue[50],
+                            padding: EdgeInsets.zero,
+                            materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                          ))
+                      .toList(),
+                ),
+              ],
+            ),
+          ),
+        ],
+
+        // Raw JSON toggle
+        Padding(
+          padding: const EdgeInsets.only(top: 8.0, right: 8.0, bottom: 8.0),
+          child: Align(
+            alignment: Alignment.centerRight,
+            child: TextButton.icon(
+              onPressed: () {
+                showDialog(
+                  context: context,
+                  builder: (context) => AlertDialog(
+                    title: const Text('Raw Analysis'),
+                    content: SingleChildScrollView(
+                      child: SelectableText(
+                        const JsonEncoder.withIndent('  ').convert(_classification),
+                        style: const TextStyle(fontFamily: 'monospace'),
+                      ),
+                    ),
+                    actions: [
+                      TextButton(
+                        onPressed: () => Navigator.pop(context),
+                        child: const Text('Close'),
+                      ),
+                    ],
+                  ),
+                );
+              },
+              icon: const Icon(Icons.code, size: 16),
+              label: const Text('View Raw Data'),
+              style: TextButton.styleFrom(
+                padding: const EdgeInsets.symmetric(horizontal: 8),
+                minimumSize: const Size(0, 32),
+                tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+              ),
+            ),
           ),
         ),
       ],
     );
   }
 
-  Color _getSentimentColor(String sentiment) {
-    switch (sentiment) {
-      case 'happy':
-        return Colors.green;
-      case 'sad':
-        return Colors.red;
-      default:
-        return Colors.blue;
-    }
+  Widget _buildResultSection({
+    required IconData icon,
+    required String title,
+    required String value,
+    Color? color,
+  }) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 12.0),
+      child: Row(
+        children: [
+          Icon(icon, size: 20, color: color ?? Colors.grey[600]),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  title,
+                  style: TextStyle(
+                    fontSize: 12,
+                    color: Colors.grey[600],
+                  ),
+                ),
+                const SizedBox(height: 2),
+                Text(
+                  value,
+                  style: const TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.w500,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildAggressivenessIndicator(int level) {
+    return Row(
+      mainAxisSize: MainAxisSize.min,
+      children: List.generate(5, (index) {
+        return Icon(
+          index < level ? Icons.whatshot : Icons.whatshot_outlined,
+          color: index < level ? Colors.orange : Colors.grey[300],
+          size: 20,
+        );
+      }),
+    );
   }
 
   @override
   Widget build(BuildContext context) {
     return Column(
-      crossAxisAlignment: CrossAxisAlignment
-          .stretch, // Stretching the column to fill available width
       children: [
-        // Provider selection dropdown
-        DropdownButtonFormField<String>(
-          value: _selectedProvider,
-          decoration: const InputDecoration(
-            labelText: 'Select Provider',
-            border: OutlineInputBorder(),
+        // Input card
+        Card(
+          margin: const EdgeInsets.all(16),
+          child: Padding(
+            padding: const EdgeInsets.all(16.0),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                TextField(
+                  controller: _textController,
+                  maxLines: 5,
+                  decoration: InputDecoration(
+                    labelText: 'Enter text to analyze',
+                    hintText: 'Paste or type any text content here...',
+                    border: const OutlineInputBorder(),
+                    suffixIcon: _textController.text.isNotEmpty
+                        ? IconButton(
+                            icon: const Icon(Icons.clear),
+                            onPressed: () {
+                              _textController.clear();
+                              setState(() {});
+                            },
+                          )
+                        : null,
+                  ),
+                  onChanged: (_) => setState(() {}),
+                ),
+                const SizedBox(height: 16),
+                Row(
+                  children: [
+                    Expanded(
+                      child: FilledButton.icon(
+                        onPressed: _textController.text.trim().isEmpty || _isLoading
+                            ? null
+                            : _classifyText,
+                        icon: _isLoading
+                            ? const SizedBox(
+                                width: 20,
+                                height: 20,
+                                child: CircularProgressIndicator(strokeWidth: 2),
+                              )
+                            : const Icon(Icons.analytics, size: 20),
+                        label: Text(_isLoading ? 'Analyzing...' : 'Analyze Text'),
+                        style: FilledButton.styleFrom(
+                          padding: const EdgeInsets.symmetric(vertical: 16),
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ],
+            ),
           ),
-          items: const [
-            DropdownMenuItem(value: 'google', child: Text('Google')),
-            DropdownMenuItem(value: 'openai', child: Text('OpenAI')),
-          ],
-          onChanged: (String? newValue) {
-            if (newValue != null) {
-              setState(() {
-                _selectedProvider = newValue;
-                _initializeClassifier();
-              });
-            }
-          },
         ),
-        const SizedBox(height: 16),
-        TextField(
-          controller: _textController, // Controller for the text field
-          maxLines: 5,
-          decoration: InputDecoration(
-            labelText: 'Enter text to classify', // Label for the text field
-            border: OutlineInputBorder(), // Border for the text field
+
+        // Results section
+        Expanded(
+          child: AnimatedSwitcher(
+            duration: const Duration(milliseconds: 300),
+            child: _classification != null || _error != null || _isLoading
+                ? _buildResultCard()
+                : _buildEmptyState(),
           ),
         ),
-        const SizedBox(height: 16),
-        ElevatedButton(
-          onPressed: _isLoading ? null : _classifyText,
-          child: _isLoading
-              ? const CircularProgressIndicator()
-              : const Text('Classify'),
-        ),
-        const SizedBox(height: 16),
-        _buildResultCard(), // Display results if available
       ],
     );
   }

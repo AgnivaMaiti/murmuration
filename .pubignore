@@ -1,24 +1,73 @@
 # Generated files
-pubspec.lock
-.dart_tool/
 .packages
+.pub/
+.pub-cache/
+.pubignore
 build/
+
+# Build outputs
 *.g.dart
+*.freezed.dart
+*.mocks.dart
+*.inject.summary
+*.inject.dart
+*.inject.summary.json
+*.inject.graph.summary
+*.inject.graph.json
+*.inject.summary.json.stamp
+*.inject.summary.json.stamp.track.dependencies
 
 # IDE files
 .idea/
 .vscode/
 *.iml
+*.ipr
+*.iws
+*.sublime-*
+*.code-workspace
 
 # Test files
 test/
 coverage/
+.test_coverage.dart
 
 # Documentation
 docs/
 doc/
+**/doc/api/
 
-# Temporary files
+# Example files
+example/
+**/example/
+
+# Environment and secrets
+.env
+.env.*
+!.env.example
+secrets.*
+
+# Logs and temporary files
 *.log
 *.tmp
-.DS_Store 
+*.swp
+*.swo
+
+# OS generated files
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+
+# Flutter specific
+.flutter-plugins
+.flutter-plugins-dependencies
+**/ios/Flutter/.last_build_id
+
+# Local development
+pubspec.lock
+.dart_tool/
+.mf_build/
+.mf_mobile_build/
