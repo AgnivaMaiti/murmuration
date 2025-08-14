@@ -5,6 +5,20 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [3.1.2] - 2025-08-14
+
+### Fixed
+- Updated Anthropic SDK integration to use the official `anthropic_sdk_dart` package
+- Fixed dependency issues in pubspec.yaml
+- Added missing dependencies: `path` and `crypto` packages
+- Moved `flutter_dotenv` to main dependencies as it's used in the main package
+- Fixed various analyzer warnings and improved type safety
+
+### Changed
+- Updated example code to work with the new Anthropic SDK
+- Improved error handling in the Anthropic client
+- Updated documentation and tutorials to reflect the new SDK usage
+
 ## [3.1.1] - 2025-08-14
 
 ### Added

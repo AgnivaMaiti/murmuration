@@ -47,6 +47,8 @@ class TextClassifier {
               modelName: _getModelForProvider(provider),
               temperature: 0.2, // Lower temperature for more consistent classifications
               maxTokens: 1000,
+              topP: 0.9,
+              topK: 40,
             ),
             cacheConfig: const CacheConfig(
               enabled: true,

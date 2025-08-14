@@ -10,6 +10,11 @@ environment:
   sdk: ">=3.0.0 <4.0.0"
   flutter: ">=3.0.0"
 
+dependency_overrides:
+  # Ensure all dependencies use null-safe versions
+  collection: ^1.18.0
+  meta: ^1.10.0
+
 dependencies:
   flutter:
     sdk: flutter
@@ -20,13 +25,16 @@ dependencies:
   shared_preferences: ^2.2.0    # For local storage
   synchronized: ^3.1.0          # For thread safety
   path_provider: ^2.1.0         # For file system access
-  intl: ^0.18.0                # For internationalization
+  intl: ^0.19.0                # For internationalization
   json_annotation: ^4.8.1       # For JSON serialization
-  anthropic_dart: ^0.8.0        # For Anthropic Claude integration
+  anthropic_sdk_dart: ^0.2.2     # For Anthropic Claude integration
   logger: ^2.0.0               # For structured logging
   uuid: ^4.0.0                 # For generating unique IDs
   meta: ^1.10.0                # For annotations
   collection: ^1.18.0          # For collection utilities
+  flutter_dotenv: ^5.1.0        # For environment variable loading in examples
+  path: ^1.8.3                 # For path manipulation
+  crypto: ^3.0.3               # For cryptographic hashing
 
 dev_dependencies:
   flutter_test:
@@ -36,10 +44,9 @@ dev_dependencies:
   build_runner: ^2.4.6          # For code generation
   json_serializable: ^6.7.1     # For JSON serialization
   mockito: ^5.4.2               # For mocking in tests
-  flutter_dotenv: ^5.1.0        # For environment variable loading in examples
-  pedantic_mono: ^5.0.0         # For additional lint rules
-  test_coverage: ^0.5.0        # For test coverage reports
-  very_good_analysis: ^5.1.0   # For additional analysis options
+  dash_chat_2: ^0.0.21          # For chat UI components
+  pedantic: ^1.11.1             # For additional lint rules
+  very_good_analysis: ^5.1.0    # For additional analysis options
 
 flutter:
   uses-material-design: true

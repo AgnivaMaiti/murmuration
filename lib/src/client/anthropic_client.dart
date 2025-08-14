@@ -3,7 +3,7 @@ import 'dart:convert';
 import 'dart:math';
 import 'package:http/http.dart' as http;
 import 'package:synchronized/synchronized.dart';
-import 'package:anthropic_dart/anthropic_dart.dart' as anthropic;
+import 'package:anthropic_sdk_dart/anthropic_sdk_dart.dart';
 
 import '../config/murmuration_config.dart';
 import '../messaging/message.dart';
@@ -30,7 +30,7 @@ class AnthropicClient {
   final Map<String, int> _rateLimitLimit = {};
   final Map<String, int> _rateLimitReset = {};
   final _jitter = Random();
-  late final anthropic.Anthropic _anthropic;
+  late final Anthropic _anthropic;
 
   AnthropicClient(this.config)
       : baseUrl = config.baseUrl ?? 'https://api.anthropic.com/v1',
@@ -40,10 +40,10 @@ class AnthropicClient {
   }
 
   void _initializeClient() {
-    _anthropic = anthropic.Anthropic(
+    _anthropic = Anthropic(
       apiKey: config.apiKey,
       baseUrl: baseUrl,
-      httpClient: _client,
+      client: _client,
     );
   }
 
@@ -73,9 +73,9 @@ class AnthropicClient {
 
       final response = await _anthropic.messages.create(
         model: model,
-        messages: conversation.map((m) => anthropic.Message(
+        messages: conversation.map((m) => Message(
           role: _convertRole(m.role),
-          content: m.content,
+          content: [TextContent(text: m.content)],
         )).toList(),
         system: systemMessages.isNotEmpty ? systemMessages.first.content : null,
         maxTokens: config.modelConfig.maxTokens,
@@ -95,7 +95,7 @@ class AnthropicClient {
             'index': 0,
             'message': {
               'role': 'assistant',
-              'content': response.content.firstOrNull?.text ?? '',
+              'content': response.content.isNotEmpty ? response.content.first.text : '',
             },
             'finish_reason': response.stopReason,
           },
@@ -108,7 +108,7 @@ class AnthropicClient {
       };
     } catch (e, stackTrace) {
       _logger.error('Anthropic API error', error: e, stackTrace: stackTrace);
-      if (e is anthropic.AnthropicException) {
+      if (e is AnthropicException) {
         throw MurmurationException(
           'Anthropic API error: ${e.message}',
           code: ErrorCode.apiError,
@@ -120,22 +120,22 @@ class AnthropicClient {
     }
   }
 
-  /// Converts a MessageRole to an Anthropic message role
+  /// Converts a MessageRole to an Anthropic MessageRole enum
   /// Handles special cases for function and tool roles
-  String _convertRole(MessageRole role) {
+  MessageRole _convertRole(MessageRole role) {
     switch (role) {
       case MessageRole.user:
-        return 'user';
+        return MessageRole.user;
       case MessageRole.assistant:
-        return 'assistant';
+        return MessageRole.assistant;
       case MessageRole.system:
-        return 'system';
+        return MessageRole.user; // Anthropic doesn't have a system role, map to user
       case MessageRole.function:
         _logger.warning('Function role not directly supported by Anthropic, mapping to user');
-        return 'user';
+        return MessageRole.user;
       case MessageRole.tool:
         _logger.warning('Tool role not directly supported by Anthropic, mapping to user');
-        return 'user';
+        return MessageRole.user;
     }
   }
 
@@ -221,91 +221,103 @@ class AnthropicClient {
         final systemMessages = messages.where((m) => m.role == MessageRole.system);
         final conversation = messages.where((m) => m.role != MessageRole.system);
         
-        final stream = _anthropic.messages.stream(
-          model: model,
-          messages: conversation.map((m) => anthropic.Message(
-            role: _convertRole(m.role),
-            content: m.content,
-          )).toList(),
-          system: systemMessages.isNotEmpty ? systemMessages.first.content : null,
-          maxTokens: config.modelConfig.maxTokens,
-          temperature: config.modelConfig.temperature,
-          topP: config.modelConfig.topP,
-          topK: config.modelConfig.topK,
-          ...?overrideParameters,
+        final stream = _anthropic.createMessageStream(
+          request: CreateMessageRequest(
+            model: Model.modelId(model),
+            messages: conversation.map((m) => Message(
+              role: _convertRole(m.role),
+              content: [TextContent(text: m.content)],
+            )).toList(),
+            system: systemMessages.isNotEmpty ? systemMessages.first.content : null,
+            maxTokens: config.modelConfig.maxTokens,
+            temperature: config.modelConfig.temperature,
+            topP: config.modelConfig.topP,
+            topK: config.modelConfig.topK,
+          ),
         );
         
         var buffer = StringBuffer();
         
         await for (final event in stream) {
-          if (event is anthropic.ContentBlockStartEvent) {
-            // Handle content block start
-            final chunk = {
-              'id': 'cmpl-${DateTime.now().millisecondsSinceEpoch}',
-              'object': 'chat.completion.chunk',
-              'created': DateTime.now().millisecondsSinceEpoch ~/ 1000,
-              'model': model,
-              'choices': [
-                {
-                  'index': 0,
-                  'delta': {'role': 'assistant', 'content': ''},
-                  'finish_reason': null,
+          event.map(
+            messageStart: (_) {
+              // Handle message start
+              final chunk = {
+                'id': 'cmpl-${DateTime.now().millisecondsSinceEpoch}',
+                'object': 'chat.completion.chunk',
+                'created': DateTime.now().millisecondsSinceEpoch ~/ 1000,
+                'model': model,
+                'choices': [
+                  {
+                    'index': 0,
+                    'delta': {'role': 'assistant', 'content': ''},
+                    'finish_reason': null,
+                  },
+                ],
+              };
+              controller.add(chunk);
+            },
+            contentBlockDelta: (event) {
+              // Handle content delta
+              buffer.write(event.delta.text);
+              
+              final chunk = {
+                'id': 'cmpl-${DateTime.now().millisecondsSinceEpoch}',
+                'object': 'chat.completion.chunk',
+                'created': DateTime.now().millisecondsSinceEpoch ~/ 1000,
+                'model': model,
+                'choices': [
+                  {
+                    'index': 0,
+                    'delta': {'content': event.delta.text},
+                    'finish_reason': null,
+                  },
+                ],
+              };
+              controller.add(chunk);
+            },
+            messageStop: (event) {
+              // Send final chunk with finish reason
+              final chunk = {
+                'id': 'cmpl-${DateTime.now().millisecondsSinceEpoch}',
+                'object': 'chat.completion.chunk',
+                'created': DateTime.now().millisecondsSinceEpoch ~/ 1000,
+                'model': model,
+                'choices': [
+                  {
+                    'index': 0,
+                    'delta': {},
+                    'finish_reason': 'stop',
+                  },
+                ],
+                'usage': {
+                  'prompt_tokens': event.usage.inputTokens,
+                  'completion_tokens': event.usage.outputTokens,
+                  'total_tokens': event.usage.inputTokens + event.usage.outputTokens,
                 },
-              ],
-            };
-            controller.add(chunk);
-          } 
-          else if (event is anthropic.ContentBlockDeltaEvent) {
-            // Handle content delta
-            buffer.write(event.delta.text);
-            
-            final chunk = {
-              'id': 'cmpl-${DateTime.now().millisecondsSinceEpoch}',
-              'object': 'chat.completion.chunk',
-              'created': DateTime.now().millisecondsSinceEpoch ~/ 1000,
-              'model': model,
-              'choices': [
-                {
-                  'index': 0,
-                  'delta': {'content': event.delta.text},
-                  'finish_reason': null,
-                },
-              ],
-            };
-            controller.add(chunk);
-          }
-          else if (event is anthropic.MessageStopEvent) {
-            // Send final chunk with finish reason
-            final chunk = {
-              'id': 'cmpl-${DateTime.now().millisecondsSinceEpoch}',
-              'object': 'chat.completion.chunk',
-              'created': DateTime.now().millisecondsSinceEpoch ~/ 1000,
-              'model': model,
-              'choices': [
-                {
-                  'index': 0,
-                  'delta': {},
-                  'finish_reason': 'stop',
-                },
-              ],
-              'usage': {
-                'prompt_tokens': event.usage.inputTokens,
-                'completion_tokens': event.usage.outputTokens,
-                'total_tokens': event.usage.inputTokens + event.usage.outputTokens,
-              },
-            };
-            controller.add(chunk);
-            await controller.close();
-          }
-          else if (event is anthropic.MessageStartEvent) {
-            _updateRateLimitFromHeaders(event.responseHeaders, 'messages');
-          }
+              };
+              controller.add(chunk);
+              controller.close();
+            },
+            contentBlockStart: (_) {},
+            contentBlockStop: (_) {},
+            messageDelta: (_) {},
+            ping: (_) {},
+            error: (event) {
+              _logger.error('Error in streaming: ${event.error}');
+              controller.addError(MurmurationException(
+                'Anthropic streaming error: ${event.error}',
+                code: ErrorCode.apiError,
+              ));
+              controller.close();
+            },
+          );
         }
       } catch (e, stackTrace) {
         _logger.error('Streaming error', error: e, stackTrace: stackTrace);
         
         if (!controller.isClosed) {
-          if (e is anthropic.AnthropicException) {
+          if (e is AnthropicException) {
             controller.addError(MurmurationException(
               'Anthropic streaming error: ${e.message}',
               code: ErrorCode.apiError,
