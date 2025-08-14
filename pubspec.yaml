@@ -49,7 +49,3 @@ flutter:
 # Platform-specific settings
 web:
   # Add web-specific settings here
-  
-environment:
-  sdk: '>=3.0.0 <4.0.0'
-  flutter: '>=3.0.0'
