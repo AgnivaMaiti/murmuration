@@ -1,6 +1,6 @@
 name: murmuration
 description: A powerful and flexible AI agent framework for building intelligent applications with support for multiple LLM providers (OpenAI, Anthropic, Google) and tool chaining.
-version: 3.1.0
+version: 3.1.1
 homepage: https://github.com/AgnivaMaiti/murmuration
 repository: https://github.com/AgnivaMaiti/murmuration.git
 documentation: https://github.com/AgnivaMaiti/murmuration#readme
@@ -45,9 +45,6 @@ flutter:
   uses-material-design: true
   assets:
     - assets/
-
-# Prevent publishing of test and example files
-publish_to: none
 
 # Platform-specific settings
 web:
