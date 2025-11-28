@@ -3,8 +3,7 @@ import 'dart:convert';
 import 'dart:math';
 import 'package:http/http.dart' as http;
 import 'package:synchronized/synchronized.dart';
-import 'package:anthropic_sdk_dart/anthropic_sdk_dart.dart';
-
+import 'package:anthropic_sdk_dart/anthropic_sdk_dart.dart' as anthropic;
 import '../config/murmuration_config.dart';
 import '../messaging/message.dart';
 import '../exceptions.dart';
